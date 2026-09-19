@@ -1,26 +1,72 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import Link from "next/link";
 import Image from "next/image";
-import { Calendar, MapPin, Search, Users } from "lucide-react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
+import { buttonVariants } from "@/components/ui/button";
+
+const HEADLINE_WORDS = [
+  "Plan",
+  "every",
+  "trip",
+  "from",
+  "one",
+  "console.",
+];
+
+const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 export function HomeHero() {
-  const imageRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const prefersReducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    function handleScroll() {
-      if (!imageRef.current) return;
-      const offset = Math.min(window.scrollY * 0.15, 80);
-      imageRef.current.style.transform = `translate3d(0, ${offset}px, 0)`;
-    }
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const parallaxY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+
+  const wordVariants = {
+    hidden: prefersReducedMotion
+      ? { y: 0, opacity: 1 }
+      : { y: "100%", opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.55,
+        ease: EASE_OUT,
+      },
+    },
+  };
+
+  const fadeUpVariants = {
+    hidden: prefersReducedMotion
+      ? { y: 0, opacity: 1 }
+      : { y: 16, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: prefersReducedMotion ? 0 : 0.5,
+        ease: EASE_OUT,
+      },
+    },
+  };
 
   return (
-    <section className="relative isolate flex min-h-[92vh] items-end overflow-hidden bg-navy">
-      <div
-        ref={imageRef}
+    <section
+      ref={sectionRef}
+      className="relative isolate flex min-h-[92vh] items-end overflow-hidden bg-navy"
+    >
+      <motion.div
+        style={prefersReducedMotion ? undefined : { y: parallaxY }}
         className="absolute inset-x-0 -top-[10%] h-[120%] will-change-transform"
       >
         <Image
@@ -31,79 +77,73 @@ export function HomeHero() {
           sizes="100vw"
           className="object-cover"
         />
-      </div>
+      </motion.div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 pb-16 pt-40 sm:px-8">
-        <div>
-          <h1 className="max-w-3xl text-[clamp(3rem,6vw,5.5rem)] font-heading font-extrabold leading-[0.95] text-white">
-            Plan every trip from one console
-          </h1>
-          <p className="mt-5 max-w-xl font-body text-lg text-white/85">
-            TripConsole brings your itineraries, bookings, and travel notes
-            together in a single, clean workspace.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-1 rounded-2xl bg-white p-2 shadow-2xl sm:flex-row sm:items-center sm:divide-x sm:divide-navy/10">
-          <div className="flex flex-1 items-center gap-3 px-4 py-2.5">
-            <MapPin size={18} aria-hidden="true" className="shrink-0 text-navy/50" />
-            <div className="flex min-w-0 flex-col">
-              <label
-                htmlFor="hero-destination"
-                className="font-body text-xs font-semibold text-navy"
-              >
-                Destination
-              </label>
-              <input
-                id="hero-destination"
-                type="text"
-                placeholder="Where to?"
-                className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex flex-1 items-center gap-3 px-4 py-2.5">
-            <Calendar size={18} aria-hidden="true" className="shrink-0 text-navy/50" />
-            <div className="flex min-w-0 flex-col">
-              <label
-                htmlFor="hero-dates"
-                className="font-body text-xs font-semibold text-navy"
-              >
-                Dates
-              </label>
-              <input
-                id="hero-dates"
-                type="text"
-                placeholder="Add dates"
-                className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex flex-1 items-center gap-3 px-4 py-2.5">
-            <Users size={18} aria-hidden="true" className="shrink-0 text-navy/50" />
-            <div className="flex min-w-0 flex-col">
-              <label
-                htmlFor="hero-group-size"
-                className="font-body text-xs font-semibold text-navy"
-              >
-                Group Size
-              </label>
-              <input
-                id="hero-group-size"
-                type="text"
-                placeholder="Add travelers"
-                className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
-              />
-            </div>
-          </div>
-          <button
-            type="button"
-            className="flex items-center justify-center gap-2 rounded-xl bg-orange px-6 py-3.5 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90 sm:ml-1"
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 pb-24 pt-40 sm:px-8">
+        <h1
+          aria-label={HEADLINE_WORDS.join(" ")}
+          className="max-w-3xl text-[clamp(3rem,6vw,5.5rem)] font-heading font-extrabold leading-[0.95] text-white"
+        >
+          <motion.span
+            aria-hidden="true"
+            initial="hidden"
+            animate="visible"
+            transition={{ staggerChildren: 0.07, delayChildren: 0.05 }}
+            className="inline"
           >
-            <Search size={16} aria-hidden="true" /> Search
-          </button>
-        </div>
+            {HEADLINE_WORDS.map((word, index) => (
+              <span
+                key={index}
+                className="inline-block overflow-hidden pb-1 align-bottom"
+              >
+                <motion.span
+                  variants={wordVariants}
+                  className="inline-block"
+                >
+                  {word}
+                  {index < HEADLINE_WORDS.length - 1 ? " " : ""}
+                </motion.span>
+              </span>
+            ))}
+          </motion.span>
+        </h1>
+
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpVariants}
+          transition={{ delay: prefersReducedMotion ? 0 : 0.55 }}
+          className="max-w-xl font-body text-lg text-white/85"
+        >
+          TripConsole brings your itineraries, bookings, and travel notes
+          together in a single, clean workspace.
+        </motion.p>
+
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpVariants}
+          transition={{ delay: prefersReducedMotion ? 0 : 0.7 }}
+          className="flex flex-wrap items-center gap-4"
+        >
+          <Link
+            href="/signup"
+            className={buttonVariants({ variant: "accent", size: "lg" })}
+          >
+            Get Started
+          </Link>
+          <Link
+            href="/templates"
+            className={buttonVariants({
+              variant: "outline",
+              size: "lg",
+              className: "border-white/40 text-white hover:bg-white/10",
+            })}
+          >
+            Browse Templates
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
