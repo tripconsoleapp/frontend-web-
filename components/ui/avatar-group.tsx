@@ -1,11 +1,15 @@
+import { cn } from "@/lib/cn";
+
 const COLORS = ["bg-mint", "bg-navy/70", "bg-orange/80"];
 
 export function AvatarGroup({
   count = 3,
   label,
+  labelClassName,
 }: {
   count?: number;
   label: string;
+  labelClassName?: string;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -17,7 +21,9 @@ export function AvatarGroup({
           />
         ))}
       </div>
-      <span className="font-body text-sm text-text-grey">{label}</span>
+      <span className={cn("font-body text-sm text-text-grey", labelClassName)}>
+        {label}
+      </span>
     </div>
   );
 }
