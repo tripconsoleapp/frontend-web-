@@ -5,30 +5,37 @@ import { CategoryNav } from "@/components/marketing/category-nav";
 import { FeaturedTemplates } from "@/components/marketing/featured-templates";
 import { SectionBreak } from "@/components/marketing/section-break";
 import { HowItWorks } from "@/components/marketing/how-it-works";
-import { FadeIn } from "@/components/ui/fade-in";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export default function Home() {
   return (
     <div className="flex flex-col flex-1">
       <Navbar />
       <HomeHero />
-      <CategoryNav />
 
-      <FadeIn>
+      <ScrollReveal>
+        <CategoryNav />
+      </ScrollReveal>
+
+      <ScrollReveal>
         <FeaturedTemplates />
-      </FadeIn>
+      </ScrollReveal>
 
-      <SectionBreak
-        imageUrl="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=2400&q=80"
-        alt="Traditional houseboat gliding through Kerala's backwaters"
-        headline="Plan your escape through Kerala's backwaters"
-      />
+      <ScrollReveal>
+        <SectionBreak
+          imageUrl="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=2400&q=80"
+          alt="Traditional houseboat gliding through Kerala's backwaters"
+          headline="Plan your escape through Kerala's backwaters"
+        />
+      </ScrollReveal>
 
-      <FadeIn>
+      <ScrollReveal>
         <HowItWorks />
-      </FadeIn>
+      </ScrollReveal>
 
-      <Footer />
+      <ScrollReveal>
+        <Footer />
+      </ScrollReveal>
     </div>
   );
 }
