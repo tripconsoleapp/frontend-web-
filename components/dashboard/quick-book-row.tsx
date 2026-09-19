@@ -12,17 +12,17 @@ export function QuickBookRow() {
   return (
     <div>
       <p className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">
-        Or book just one service directly
+        Book just one service directly
       </p>
-      <div className="mt-3 grid grid-cols-4 gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {SERVICES.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className="flex flex-col items-center gap-2 rounded-xl border border-navy/10 bg-white py-4 font-body text-xs font-medium text-navy hover:border-navy/25"
+            className="flex flex-col items-center gap-2.5 rounded-xl border border-navy/10 bg-white py-6 font-body text-sm font-medium text-navy hover:border-navy/25"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-navy/5 text-navy">
-              <Icon size={18} />
+            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-navy/5 text-navy">
+              <Icon size={20} />
             </span>
             {label}
           </Link>

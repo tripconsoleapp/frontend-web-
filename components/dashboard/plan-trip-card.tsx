@@ -9,15 +9,17 @@ export function PlanTripCard({
   description: string;
 }) {
   return (
-    <div className="rounded-2xl bg-orange p-5 text-white">
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-        <Compass size={20} />
+    <div className="flex h-full flex-col justify-center rounded-2xl bg-orange p-8 text-white">
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20">
+        <Compass size={22} />
       </span>
-      <h2 className="mt-3 font-heading text-lg font-semibold">{title}</h2>
-      <p className="mt-1 font-body text-sm text-white/85">{description}</p>
+      <h2 className="mt-4 font-heading text-xl font-semibold">{title}</h2>
+      <p className="mt-1.5 max-w-md font-body text-sm text-white/85">
+        {description}
+      </p>
       <Link
         href="/trips/new"
-        className="mt-4 inline-flex items-center gap-1 rounded-md bg-white px-4 py-2 font-body text-sm font-semibold text-orange"
+        className="mt-5 inline-flex w-fit items-center gap-1 rounded-md bg-white px-5 py-2.5 font-body text-sm font-semibold text-orange"
       >
         Create Trip &rarr;
       </Link>

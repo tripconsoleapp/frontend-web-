@@ -1,6 +1,4 @@
-import { Bell } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
-import { AppHeader } from "@/components/layout/app-header";
 import { EmptyDashboard } from "@/components/dashboard/empty-dashboard";
 import { ActiveDashboard } from "@/components/dashboard/active-dashboard";
 import { MOCK_TRIPS } from "@/lib/mock-trips";
@@ -21,15 +19,7 @@ export default async function DashboardPage({
   const firstName = MOCK_USER.fullName.split(" ")[0];
 
   return (
-    <AppShell
-      header={
-        <AppHeader
-          title="TripConsole"
-          rightHref="/notifications"
-          rightIcon={<Bell size={20} />}
-        />
-      }
-    >
+    <AppShell>
       {trips.length === 0 ? (
         <EmptyDashboard name={firstName} />
       ) : (

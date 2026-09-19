@@ -1,25 +1,28 @@
 import Link from "next/link";
 import { Landmark } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 export function PilgrimageBanner() {
   return (
-    <div className="rounded-2xl border border-mint/60 bg-mint/15 p-5">
-      <Badge variant="mint" className="w-fit gap-1.5">
-        <Landmark size={12} /> Pilgrimage Programs
-      </Badge>
-      <h2 className="mt-3 font-heading text-lg font-semibold text-navy">
-        Planning a Sabarimala or Guruvayur trip?
-      </h2>
-      <p className="mt-1 font-body text-sm text-text-grey">
-        Explore dedicated pilgrim itineraries, KSRTC coordination, and group
-        management tools.
-      </p>
+    <div className="flex flex-col items-start gap-5 rounded-2xl border border-amber-200 bg-amber-50 p-7 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-4">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+          <Landmark size={22} />
+        </span>
+        <div>
+          <h2 className="font-heading text-xl font-semibold text-navy">
+            Planning a Sabarimala or Guruvayur trip?
+          </h2>
+          <p className="mt-1 max-w-xl font-body text-sm text-text-grey">
+            Explore dedicated pilgrim itineraries, KSRTC coordination, and
+            group management tools.
+          </p>
+        </div>
+      </div>
       <Link
-        href="/pilgrimage-programs"
-        className="mt-3 inline-flex items-center gap-1 font-body text-sm font-semibold text-navy underline"
+        href="/pilgrimage"
+        className="inline-flex shrink-0 items-center justify-center rounded-md bg-amber-600 px-5 py-2.5 font-body text-sm font-semibold text-white hover:bg-amber-700"
       >
-        Explore Pilgrimage Programs &rarr;
+        Explore Programs
       </Link>
     </div>
   );

@@ -18,7 +18,10 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 py-6">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-5 rounded-2xl border border-navy/10 bg-white p-8"
+    >
       <PasswordInput
         label="Current Password"
         required

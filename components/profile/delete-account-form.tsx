@@ -23,7 +23,7 @@ export function DeleteAccountForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col items-center gap-5 px-4 py-8 text-center"
+      className="flex flex-col items-center gap-5 rounded-2xl border border-navy/10 bg-white p-8 text-center"
     >
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
         <AlertTriangle size={26} />

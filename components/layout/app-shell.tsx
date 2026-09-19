@@ -1,18 +1,13 @@
 import { ReactNode } from "react";
-import { BottomNav } from "@/components/layout/bottom-nav";
+import { Sidebar } from "@/components/layout/sidebar";
 
-export function AppShell({
-  header,
-  children,
-}: {
-  header: ReactNode;
-  children: ReactNode;
-}) {
+export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col bg-white pb-20">
-      {header}
-      <main className="flex-1">{children}</main>
-      <BottomNav />
+    <div className="min-h-screen bg-white">
+      <Sidebar />
+      <div className="ml-60 min-h-screen px-10 py-10 xl:px-14 xl:py-12">
+        {children}
+      </div>
     </div>
   );
 }
