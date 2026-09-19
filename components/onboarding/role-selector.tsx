@@ -27,12 +27,16 @@ const ROLES = [
   },
 ] as const;
 
-export function RoleSelector() {
+export function RoleSelector({ email }: { email: string }) {
   const router = useRouter();
   const [selected, setSelected] = useState<(typeof ROLES)[number]["id"]>(
     "organizer"
   );
   const selectedRole = ROLES.find((role) => role.id === selected)!;
+
+  function handleContinue() {
+    router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+  }
 
   return (
     <div className="flex w-full max-w-3xl flex-col items-center gap-8">
@@ -50,7 +54,7 @@ export function RoleSelector() {
       </div>
 
       <div className="flex flex-col items-center gap-3">
-        <Button variant="accent" size="lg">
+        <Button variant="accent" size="lg" onClick={handleContinue}>
           Continue as {selectedRole.title}
         </Button>
         <button

@@ -15,7 +15,7 @@ export function LoginForm() {
 
   function handleEmailSubmit(e: FormEvent) {
     e.preventDefault();
-    router.push("/");
+    router.push("/dashboard");
   }
 
   function handlePhoneSubmit(e: FormEvent) {

@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button";
 
 export function SignupForm() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    router.push("/onboarding/role");
+    router.push(`/role-selection?email=${encodeURIComponent(email)}`);
   }
 
   return (
@@ -42,6 +43,8 @@ export function SignupForm() {
         name="email"
         type="email"
         placeholder="you@school.edu"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
         leftElement={<Mail size={18} />}
         rightElement={<CheckCircle2 size={18} className="text-mint" />}
         required

@@ -14,7 +14,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    router.push("/onboarding/role");
+    router.push("/dashboard");
   }
 
   return (

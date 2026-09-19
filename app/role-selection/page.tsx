@@ -2,7 +2,13 @@ import { CalendarCheck } from "lucide-react";
 import { StepBadge } from "@/components/onboarding/step-badge";
 import { RoleSelector } from "@/components/onboarding/role-selector";
 
-export default function ChooseRolePage() {
+export default async function ChooseRolePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string }>;
+}) {
+  const { email } = await searchParams;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-white px-6 py-16">
       <StepBadge step={2} total={3} label="Choose Your Role" />
@@ -20,7 +26,7 @@ export default function ChooseRolePage() {
         </p>
       </div>
 
-      <RoleSelector />
+      <RoleSelector email={email ?? ""} />
     </div>
   );
 }
