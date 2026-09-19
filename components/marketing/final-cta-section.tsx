@@ -13,7 +13,7 @@ export function FinalCtaSection() {
         </p>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <Link
-            href="/signup"
+            href="/signup/create"
             className={buttonVariants({ variant: "accent", size: "lg" })}
           >
             Create an Account
