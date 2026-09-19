@@ -1,19 +1,18 @@
+import Link from "next/link";
+import { Navbar } from "@/components/layout/navbar";
+import { ValuePropSection } from "@/components/marketing/value-prop-section";
+import { FinalCtaSection } from "@/components/marketing/final-cta-section";
+import { AvatarGroup } from "@/components/ui/avatar-group";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+
 export default function Home() {
   return (
     <div className="flex flex-col flex-1">
-      <nav className="bg-navy px-8 py-5 flex items-center justify-between">
-        <span className="font-heading font-semibold text-xl text-white">
-          TripConsole
-        </span>
-        <button className="bg-orange text-white font-body font-medium px-5 py-2 rounded-md hover:opacity-90 transition-opacity">
-          Get Started
-        </button>
-      </nav>
+      <Navbar />
 
       <main className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24 gap-6">
-        <span className="inline-block bg-mint text-navy font-body font-medium text-sm px-3 py-1 rounded-full">
-          New
-        </span>
+        <Badge variant="mint">New</Badge>
         <h1 className="font-heading font-bold text-4xl sm:text-5xl text-navy max-w-2xl">
           Plan every trip from one console
         </h1>
@@ -21,10 +20,29 @@ export default function Home() {
           TripConsole brings your itineraries, bookings, and travel notes
           together in a single, clean workspace.
         </p>
-        <button className="bg-navy text-white font-body font-medium px-6 py-3 rounded-md hover:opacity-90 transition-opacity">
+        <Link href="/signup" className={buttonVariants({ variant: "primary", size: "lg" })}>
           Start Planning
-        </button>
+        </Link>
       </main>
+
+      <ValuePropSection
+        eyebrow="Final step"
+        eyebrowVariant="orange"
+        title="Book Your Journey"
+        description="Experience lightning-fast planning with our secure console. Your next great adventure is just a tap away."
+        imagePosition="right"
+      >
+        <AvatarGroup count={3} label="Join 50k+ travelers" />
+      </ValuePropSection>
+
+      <ValuePropSection
+        eyebrow="Seamless planning"
+        title="Plan Your Escape"
+        description="Discover and organize your next adventure with our seamless trip planning tools designed for the discerning traveler."
+        imagePosition="left"
+      />
+
+      <FinalCtaSection />
     </div>
   );
 }
