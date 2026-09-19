@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
 
 export function Navbar() {
   return (
@@ -10,8 +9,11 @@ export function Navbar() {
       >
         TripConsole
       </Link>
-      <Link href="/signup" className={buttonVariants({ variant: "accent", size: "sm" })}>
-        Get Started
+      <Link
+        href="/login"
+        className="font-body text-sm font-medium text-white hover:text-white/80"
+      >
+        Log In
       </Link>
     </nav>
   );
