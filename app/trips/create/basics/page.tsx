@@ -2,7 +2,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { TripBasicsForm } from "@/components/trips/trip-basics-form";
 import { getTemplateById } from "@/lib/mock-templates";
 
-export default async function CreateTripPage({
+export default async function TripBasicsPage({
   searchParams,
 }: {
   searchParams: Promise<{ template?: string; participants?: string }>;

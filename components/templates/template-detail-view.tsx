@@ -241,7 +241,7 @@ export function TemplateDetailView({ template }: { template: Template }) {
             </p>
           </div>
           <Link
-            href={`/trips/create?template=${template.id}&participants=${participants}`}
+            href={`/trips/create/loading?template=${template.id}&participants=${participants}`}
             className={buttonVariants({ variant: "accent", size: "lg" })}
           >
             Use This Template

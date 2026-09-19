@@ -9,7 +9,7 @@ const OPTIONS = [
     description:
       "Full control, build your trip from zero — choose your own destinations, dates, and services.",
     buttonLabel: "Start from Scratch",
-    href: "/trips/create",
+    href: "/trips/create/loading",
   },
   {
     icon: Sparkles,
