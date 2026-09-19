@@ -47,7 +47,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             className={cn(
               "flex-1 rounded-md py-2.5 font-body text-sm font-medium text-white",
-              destructive ? "bg-red-600 hover:bg-red-700" : "bg-orange hover:bg-orange/90"
+              destructive ? "bg-destructive hover:bg-destructive-hover" : "bg-orange hover:bg-orange/90"
             )}
           >
             {confirmLabel}

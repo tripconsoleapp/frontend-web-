@@ -47,12 +47,16 @@ export function HomeHero() {
 
         <div className="flex flex-col gap-1 rounded-2xl bg-white p-2 shadow-2xl sm:flex-row sm:items-center sm:divide-x sm:divide-navy/10">
           <div className="flex flex-1 items-center gap-3 px-4 py-2.5">
-            <MapPin size={18} className="shrink-0 text-navy/50" />
+            <MapPin size={18} aria-hidden="true" className="shrink-0 text-navy/50" />
             <div className="flex min-w-0 flex-col">
-              <span className="font-body text-xs font-semibold text-navy">
+              <label
+                htmlFor="hero-destination"
+                className="font-body text-xs font-semibold text-navy"
+              >
                 Destination
-              </span>
+              </label>
               <input
+                id="hero-destination"
                 type="text"
                 placeholder="Where to?"
                 className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
@@ -60,12 +64,16 @@ export function HomeHero() {
             </div>
           </div>
           <div className="flex flex-1 items-center gap-3 px-4 py-2.5">
-            <Calendar size={18} className="shrink-0 text-navy/50" />
+            <Calendar size={18} aria-hidden="true" className="shrink-0 text-navy/50" />
             <div className="flex min-w-0 flex-col">
-              <span className="font-body text-xs font-semibold text-navy">
+              <label
+                htmlFor="hero-dates"
+                className="font-body text-xs font-semibold text-navy"
+              >
                 Dates
-              </span>
+              </label>
               <input
+                id="hero-dates"
                 type="text"
                 placeholder="Add dates"
                 className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
@@ -73,12 +81,16 @@ export function HomeHero() {
             </div>
           </div>
           <div className="flex flex-1 items-center gap-3 px-4 py-2.5">
-            <Users size={18} className="shrink-0 text-navy/50" />
+            <Users size={18} aria-hidden="true" className="shrink-0 text-navy/50" />
             <div className="flex min-w-0 flex-col">
-              <span className="font-body text-xs font-semibold text-navy">
+              <label
+                htmlFor="hero-group-size"
+                className="font-body text-xs font-semibold text-navy"
+              >
                 Group Size
-              </span>
+              </label>
               <input
+                id="hero-group-size"
                 type="text"
                 placeholder="Add travelers"
                 className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
@@ -89,7 +101,7 @@ export function HomeHero() {
             type="button"
             className="flex items-center justify-center gap-2 rounded-xl bg-orange px-6 py-3.5 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90 sm:ml-1"
           >
-            <Search size={16} /> Search
+            <Search size={16} aria-hidden="true" /> Search
           </button>
         </div>
       </div>

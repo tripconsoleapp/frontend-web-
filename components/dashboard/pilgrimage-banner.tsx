@@ -3,9 +3,9 @@ import { Landmark } from "lucide-react";
 
 export function PilgrimageBanner() {
   return (
-    <div className="flex flex-col items-start gap-5 rounded-2xl border border-amber-200 bg-amber-50 p-7 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col items-start gap-5 rounded-2xl border border-warning-soft-border bg-warning-soft p-7 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-4">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-warning-soft-strong text-warning-soft-foreground">
           <Landmark size={22} />
         </span>
         <div>
@@ -20,7 +20,7 @@ export function PilgrimageBanner() {
       </div>
       <Link
         href="/pilgrimage"
-        className="inline-flex shrink-0 items-center justify-center rounded-md bg-amber-600 px-5 py-2.5 font-body text-sm font-semibold text-white hover:bg-amber-700"
+        className="inline-flex shrink-0 items-center justify-center rounded-md bg-warning px-5 py-2.5 font-body text-sm font-semibold text-warning-foreground hover:bg-warning-hover"
       >
         Explore Programs
       </Link>

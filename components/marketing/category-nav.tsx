@@ -23,11 +23,17 @@ export function CategoryNav() {
 
   return (
     <nav className="border-b border-navy/10 bg-white">
-      <div className="mx-auto flex max-w-6xl gap-8 overflow-x-auto px-6 py-5 sm:px-8">
+      <div
+        role="tablist"
+        aria-label="Trip categories"
+        className="mx-auto flex max-w-6xl gap-8 overflow-x-auto px-6 py-5 sm:px-8"
+      >
         {CATEGORIES.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
+            role="tab"
+            aria-selected={active === id}
             onClick={() => setActive(id)}
             className={cn(
               "flex shrink-0 flex-col items-center gap-2 border-b-2 px-1 pb-3 pt-1 font-body text-xs font-medium transition-colors",
@@ -36,7 +42,7 @@ export function CategoryNav() {
                 : "border-transparent text-text-grey hover:text-navy"
             )}
           >
-            <Icon size={22} strokeWidth={active === id ? 2.25 : 1.75} />
+            <Icon size={22} aria-hidden="true" strokeWidth={active === id ? 2.25 : 1.75} />
             {label}
           </button>
         ))}

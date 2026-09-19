@@ -1,12 +1,149 @@
 @import "tailwindcss";
 
+/**
+ * TripConsole Design Tokens
+ * Three-layer architecture: Primitive -> Semantic -> Component.
+ * This file is the single source of truth for color/typography values.
+ * Components should consume the SEMANTIC or COMPONENT layer (or the
+ * Tailwind utilities they generate), never a raw hex value directly.
+ *
+ * Dark mode: enables Tailwind's class-based `dark:` variant so the
+ * plumbing is ready ahead of time. No component currently opts into
+ * it — see the dark-mode section below for what would need to change
+ * to actually activate a dark theme.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  /* ============================================================
+     PRIMITIVE — raw brand values. Rarely changed; no semantic
+     meaning attached. Everything else derives from these.
+     ============================================================ */
   --color-navy: #2d3e50;
   --color-orange: #ff6b35;
   --color-mint: #a8d5c5;
+  --color-white: #ffffff;
   --color-text-dark: #1a1a1a;
   --color-text-grey: #666666;
-  --color-background: #ffffff;
+
+  /* Navy/mint tints used only by decorative illustrations
+     (e.g. PhotoPanel's SVG) that need shades beyond the single
+     brand value. Kept as primitives so those fills stay token-driven
+     instead of hardcoded hex. */
+  --color-navy-800: #3d5268;
+  --color-navy-900: #1c2733;
+  --color-navy-700: #26333f;
+  --color-navy-950: #182028;
+  --color-mint-100: #eaf2ef;
+
+  /* Status-color primitives. Our brand kit doesn't define its own
+     destructive/warning scale, so these mirror Tailwind's standard
+     red/amber values — sourced once here rather than left as ad hoc
+     `red-600`/`amber-50` utility classes scattered through components. */
+  --color-red-50: #fef2f2;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+
+  /* ============================================================
+     SEMANTIC — purpose-based aliases. This is the layer components
+     should reference. Swapping a primitive, or re-pointing a
+     semantic alias for a theme, only requires editing this block.
+     ============================================================ */
+  --color-primary: var(--color-navy);
+  --color-primary-foreground: var(--color-white);
+
+  --color-accent: var(--color-orange);
+  --color-accent-foreground: var(--color-white);
+
+  --color-secondary: var(--color-mint);
+  --color-secondary-foreground: var(--color-navy);
+
+  --color-success: var(--color-mint);
+  --color-success-foreground: var(--color-navy);
+
+  --color-destructive: var(--color-red-600);
+  --color-destructive-hover: var(--color-red-700);
+  --color-destructive-soft: var(--color-red-50);
+  --color-destructive-foreground: var(--color-white);
+
+  --color-warning: var(--color-amber-600);
+  --color-warning-hover: var(--color-amber-700);
+  --color-warning-foreground: var(--color-white);
+  --color-warning-soft: var(--color-amber-50);
+  --color-warning-soft-strong: var(--color-amber-100);
+  --color-warning-soft-border: var(--color-amber-200);
+  --color-warning-soft-foreground: var(--color-amber-800);
+
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-text-dark);
+
+  --color-surface: var(--color-white);
+  --color-surface-foreground: var(--color-text-dark);
+
+  --color-muted-foreground: var(--color-text-grey);
+
+  --color-border: var(--color-navy);
+  --color-ring: var(--color-navy);
+
+  /* ============================================================
+     COMPONENT — component-specific tokens, one level more specific
+     than semantic. These document (and, for non-Tailwind consumers
+     like inline SVG, directly drive) each component's color
+     contract. Tailwind-class components implement the same contract
+     via bg-primary/bg-accent/etc.; this layer is the canonical
+     reference and what non-utility-class code should use.
+     ============================================================ */
+  --button-primary-bg: var(--color-primary);
+  --button-primary-fg: var(--color-primary-foreground);
+  --button-accent-bg: var(--color-accent);
+  --button-accent-fg: var(--color-accent-foreground);
+  --button-destructive-bg: var(--color-destructive);
+  --button-destructive-hover-bg: var(--color-destructive-hover);
+  --button-destructive-fg: var(--color-destructive-foreground);
+
+  --badge-secondary-bg: var(--color-secondary);
+  --badge-secondary-fg: var(--color-secondary-foreground);
+  --badge-accent-bg: var(--color-accent);
+  --badge-accent-fg: var(--color-accent-foreground);
+  --badge-primary-bg: var(--color-primary);
+  --badge-primary-fg: var(--color-primary-foreground);
+
+  --input-border: color-mix(in srgb, var(--color-border) 15%, transparent);
+  --input-focus-ring: color-mix(in srgb, var(--color-ring) 10%, transparent);
+
+  --card-bg: var(--color-surface);
+  --card-border: color-mix(in srgb, var(--color-border) 10%, transparent);
+
+  --focus-ring-color: var(--color-ring);
+  --focus-ring-width: 2px;
+}
+
+/* ============================================================
+   DARK MODE — semantic overrides only. No component currently
+   uses the `dark:` variant, so none of this renders yet; it exists
+   so enabling dark mode later is a matter of adding `dark:` classes
+   to components, not re-deriving a color scheme from scratch.
+   ============================================================ */
+.dark {
+  --color-background: var(--color-navy-950);
+  --color-foreground: var(--color-white);
+
+  --color-surface: var(--color-navy-700);
+  --color-surface-foreground: var(--color-white);
+
+  --color-muted-foreground: #a3adba;
+
+  --color-border: var(--color-white);
+  --color-ring: var(--color-mint);
+
+  --card-bg: var(--color-surface);
+  --card-border: color-mix(in srgb, var(--color-border) 12%, transparent);
 }
 
 @theme inline {
@@ -16,6 +153,32 @@
   --color-text-dark: var(--color-text-dark);
   --color-text-grey: var(--color-text-grey);
   --color-background: var(--color-background);
+
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-success: var(--color-success);
+  --color-success-foreground: var(--color-success-foreground);
+  --color-destructive: var(--color-destructive);
+  --color-destructive-hover: var(--color-destructive-hover);
+  --color-destructive-soft: var(--color-destructive-soft);
+  --color-destructive-foreground: var(--color-destructive-foreground);
+  --color-warning: var(--color-warning);
+  --color-warning-hover: var(--color-warning-hover);
+  --color-warning-foreground: var(--color-warning-foreground);
+  --color-warning-soft: var(--color-warning-soft);
+  --color-warning-soft-strong: var(--color-warning-soft-strong);
+  --color-warning-soft-border: var(--color-warning-soft-border);
+  --color-warning-soft-foreground: var(--color-warning-soft-foreground);
+  --color-foreground: var(--color-foreground);
+  --color-surface: var(--color-surface);
+  --color-surface-foreground: var(--color-surface-foreground);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-border: var(--color-border);
+  --color-ring: var(--color-ring);
 
   --font-heading: var(--font-outfit);
   --font-body: var(--font-work-sans);

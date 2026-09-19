@@ -25,7 +25,7 @@ export function DeleteAccountForm() {
       onSubmit={handleSubmit}
       className="flex flex-col items-center gap-5 rounded-2xl border border-navy/10 bg-white p-8 text-center"
     >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive-soft text-destructive">
         <AlertTriangle size={26} />
       </span>
 
@@ -55,8 +55,8 @@ export function DeleteAccountForm() {
         className={cn(
           "w-full rounded-md py-3 font-body text-sm font-semibold text-white transition-colors",
           canDelete
-            ? "bg-red-600 hover:bg-red-700"
-            : "cursor-not-allowed bg-red-600/30"
+            ? "bg-destructive hover:bg-destructive-hover"
+            : "cursor-not-allowed bg-destructive/30"
         )}
       >
         Delete My Account

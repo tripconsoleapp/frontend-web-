@@ -76,7 +76,7 @@ export function DangerRow({ icon: Icon, label, href, onClick }: DangerRowProps) 
     return (
       <Link
         href={href}
-        className="flex items-center gap-2 px-4 py-3 text-red-600"
+        className="flex items-center gap-2 px-4 py-3 text-destructive"
       >
         {content}
       </Link>
@@ -87,7 +87,7 @@ export function DangerRow({ icon: Icon, label, href, onClick }: DangerRowProps) 
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-2 px-4 py-3 text-left text-red-600"
+      className="flex w-full items-center gap-2 px-4 py-3 text-left text-destructive"
     >
       {content}
     </button>

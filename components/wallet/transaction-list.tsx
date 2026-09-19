@@ -5,7 +5,7 @@ import { Transaction, TransactionStatus } from "@/lib/mock-wallet";
 
 const STATUS_CLASSES: Record<TransactionStatus, string> = {
   paid: "bg-mint/50 text-navy",
-  pending: "bg-amber-100 text-amber-800",
+  pending: "bg-warning-soft-strong text-warning-soft-foreground",
   refunded: "bg-navy/10 text-navy",
 };
 
