@@ -1,57 +1,62 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
-import { PhotoPanel } from "@/components/ui/photo-panel";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import Image from "next/image";
+import { Heart, MapPin } from "lucide-react";
+import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/mock-trips";
-import {
-  DESTINATION_TYPE_LABELS,
-  GROUP_TYPE_LABELS,
-  Template,
-} from "@/lib/mock-templates";
+import { GROUP_TYPE_LABELS, Template } from "@/lib/mock-templates";
 
 export function TemplateBrowseCard({ template }: { template: Template }) {
+  const [saved, setSaved] = useState(false);
+
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-navy/10 bg-white">
-      <PhotoPanel className="h-36 w-full rounded-none" />
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <div className="flex flex-wrap gap-1.5">
-          {template.destinationTypes.map((type) => (
-            <Badge key={type} variant="mint" className="text-[10px]">
-              {DESTINATION_TYPE_LABELS[type]}
-            </Badge>
-          ))}
-          {template.groupTypes.map((type) => (
-            <Badge key={type} variant="navy-outline" className="text-[10px]">
-              {GROUP_TYPE_LABELS[type]}
-            </Badge>
-          ))}
-        </div>
-
-        <h3 className="font-heading text-base font-semibold text-navy">
-          {template.name}
-        </h3>
-        <p className="flex items-center gap-1 font-body text-xs text-text-grey">
-          <MapPin size={12} /> {template.location}
-        </p>
-
-        <div className="mt-auto flex items-end justify-between pt-3">
-          <div>
-            <p className="font-body text-[10px] uppercase tracking-wide text-text-grey">
-              {template.durationLabel}
-            </p>
-            <p className="font-heading text-sm font-bold text-navy">
-              {formatCurrency(template.pricePerPerson)}
-            </p>
-          </div>
-          <Link
-            href={`/templates/${template.id}`}
-            className={buttonVariants({ variant: "accent", size: "sm" })}
-          >
-            View Template
-          </Link>
-        </div>
+    <div className="group flex flex-col gap-3">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-navy/5">
+        <Link
+          href={`/templates/${template.id}`}
+          className="absolute inset-0 z-0"
+          aria-label={`View ${template.name}`}
+        >
+          <Image
+            src={template.imageUrl}
+            alt={template.name}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          />
+        </Link>
+        <button
+          type="button"
+          onClick={() => setSaved((v) => !v)}
+          aria-label={saved ? "Remove from saved" : "Save template"}
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/25 text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100"
+        >
+          <Heart
+            size={16}
+            className={cn(saved && "fill-orange text-orange")}
+          />
+        </button>
       </div>
+
+      <Link href={`/templates/${template.id}`} className="flex flex-col gap-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-heading text-base font-semibold text-navy">
+            {template.name}
+          </h3>
+          <span className="shrink-0 font-body text-sm font-semibold text-navy">
+            {formatCurrency(template.pricePerPerson)}
+          </span>
+        </div>
+        <p className="flex items-center gap-1 font-body text-sm text-text-grey">
+          <MapPin size={13} /> {template.location}
+        </p>
+        <p className="font-body text-xs text-text-grey">
+          {template.durationLabel} &middot;{" "}
+          {template.groupTypes.map((type) => GROUP_TYPE_LABELS[type]).join(", ")}
+        </p>
+      </Link>
     </div>
   );
 }

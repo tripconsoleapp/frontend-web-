@@ -28,6 +28,7 @@ export interface Template {
   id: string;
   name: string;
   location: string;
+  imageUrl: string;
   rating: number;
   reviews: number;
   destinationTypes: DestinationType[];
@@ -65,6 +66,8 @@ export const MOCK_TEMPLATES: Template[] = [
     id: "school-excursion",
     name: "Western Ghats Expedition",
     location: "Munnar, Kerala",
+    imageUrl:
+      "https://images.unsplash.com/photo-1658051161493-1d311c4c7b4d?auto=format&fit=crop&w=1200&q=80",
     rating: 4.7,
     reviews: 184,
     destinationTypes: ["nature", "adventure"],
@@ -125,6 +128,8 @@ export const MOCK_TEMPLATES: Template[] = [
     id: "sabarimala-pilgrimage",
     name: "Sabarimala 2 Day Package",
     location: "Pathanamthitta, Kerala",
+    imageUrl:
+      "https://images.unsplash.com/photo-1644773182204-f0bf03cae0cb?auto=format&fit=crop&w=1200&q=80",
     rating: 4.8,
     reviews: 226,
     destinationTypes: ["heritage", "historical"],
@@ -171,6 +176,8 @@ export const MOCK_TEMPLATES: Template[] = [
     id: "sabarimala-heritage",
     name: "Sabarimala Heritage",
     location: "Pathanamthitta, Kerala",
+    imageUrl:
+      "https://images.unsplash.com/photo-1644773182204-f0bf03cae0cb?auto=format&fit=crop&w=1200&q=80",
     rating: 4.6,
     reviews: 142,
     destinationTypes: ["heritage"],
@@ -217,6 +224,8 @@ export const MOCK_TEMPLATES: Template[] = [
     id: "guruvayur-district",
     name: "Guruvayur District",
     location: "Thrissur, Kerala",
+    imageUrl:
+      "https://images.unsplash.com/photo-1644773182204-f0bf03cae0cb?auto=format&fit=crop&w=1200&q=80",
     rating: 4.5,
     reviews: 98,
     destinationTypes: ["heritage", "historical"],
@@ -264,6 +273,8 @@ export const MOCK_TEMPLATES: Template[] = [
     id: "munnar-nature",
     name: "Munnar Nature Trail",
     location: "Munnar, Kerala",
+    imageUrl:
+      "https://images.unsplash.com/photo-1658051161493-1d311c4c7b4d?auto=format&fit=crop&w=1200&q=80",
     rating: 4.6,
     reviews: 156,
     destinationTypes: ["nature"],
@@ -309,6 +320,8 @@ export const MOCK_TEMPLATES: Template[] = [
     id: "wayanad-wildlife-trail",
     name: "Wayanad Wildlife Trail",
     location: "Wayanad, Kerala",
+    imageUrl:
+      "https://images.unsplash.com/photo-1747801712919-27e9ba27b479?auto=format&fit=crop&w=1200&q=80",
     rating: 4.5,
     reviews: 121,
     destinationTypes: ["nature", "adventure"],
@@ -369,6 +382,8 @@ export const MOCK_TEMPLATES: Template[] = [
     id: "alleppey-backwaters",
     name: "Alleppey Backwaters",
     location: "Alappuzha, Kerala",
+    imageUrl:
+      "https://images.unsplash.com/photo-1704365159747-1f7b8913044f?auto=format&fit=crop&w=1200&q=80",
     rating: 4.7,
     reviews: 203,
     destinationTypes: ["backwaters"],
@@ -415,6 +430,8 @@ export const MOCK_TEMPLATES: Template[] = [
     id: "coorg-adventure",
     name: "Coorg Adventure",
     location: "Coorg, Karnataka",
+    imageUrl:
+      "https://images.unsplash.com/photo-1585640036119-ce2bf9c502d8?auto=format&fit=crop&w=1200&q=80",
     rating: 4.4,
     reviews: 87,
     destinationTypes: ["adventure", "nature"],

@@ -180,7 +180,7 @@ export function TemplatesView({ templates }: { templates: Template[] }) {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((template) => (
                 <TemplateBrowseCard key={template.id} template={template} />
               ))}
