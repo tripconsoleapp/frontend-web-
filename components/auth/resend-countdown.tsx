@@ -19,7 +19,7 @@ export function ResendCountdown({
 
   if (remaining > 0) {
     return (
-      <p className="font-body text-sm text-text-grey">
+      <p className="font-body text-base text-text-grey">
         Resend code in {remaining}s
       </p>
     );
@@ -32,7 +32,7 @@ export function ResendCountdown({
         setRemaining(seconds);
         onResend?.();
       }}
-      className="font-body text-sm font-medium text-orange hover:underline"
+      className="font-body text-base font-medium text-orange hover:underline"
     >
       Resend code
     </button>

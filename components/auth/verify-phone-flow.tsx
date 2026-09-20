@@ -39,20 +39,16 @@ export function VerifyPhoneFlow({
 
   if (step === "phone") {
     return (
-      <form
-        key="phone"
-        onSubmit={handleSendOtp}
-        className="flex flex-col items-center gap-6 text-center"
-      >
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint/40 text-navy">
-          <PhoneIcon size={22} />
+      <form key="phone" onSubmit={handleSendOtp} className="flex flex-col gap-6">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-mint/40 text-navy">
+          <PhoneIcon size={20} />
         </span>
 
         <div>
-          <h1 className="font-heading text-2xl font-semibold text-navy">
+          <h1 className="text-[2.5rem] font-heading font-semibold leading-[1.02] text-navy">
             Enter your mobile number
           </h1>
-          <p className="mt-2 font-body text-sm text-text-grey">
+          <p className="mt-2 font-body text-base text-text-grey">
             We&rsquo;ll send a 4-digit OTP to verify it&rsquo;s you.
           </p>
         </div>
@@ -81,26 +77,22 @@ export function VerifyPhoneFlow({
   }
 
   return (
-    <form
-      key="otp"
-      onSubmit={handleVerify}
-      className="flex flex-col items-center gap-6 text-center"
-    >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint/40 text-navy">
-        <ShieldCheck size={22} />
+    <form key="otp" onSubmit={handleVerify} className="flex flex-col gap-6">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-mint/40 text-navy">
+        <ShieldCheck size={20} />
       </span>
 
       <div>
-        <h1 className="font-heading text-2xl font-semibold text-navy">
+        <h1 className="text-[2.5rem] font-heading font-semibold leading-[1.02] text-navy">
           Verify your number
         </h1>
-        <p className="mt-2 font-body text-sm text-text-grey">
+        <p className="mt-2 font-body text-base text-text-grey">
           OTP sent to +91 {phone || "98765 43210"}
         </p>
         <button
           type="button"
           onClick={() => setStep("phone")}
-          className="mt-1 font-body text-sm font-medium text-orange hover:underline"
+          className="mt-1 font-body text-base font-medium text-orange hover:underline"
         >
           Wrong number? Change
         </button>

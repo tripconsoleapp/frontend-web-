@@ -29,7 +29,7 @@ export function OtpInput({ length, value, onChange }: OtpInputProps) {
   }
 
   return (
-    <div className="flex justify-center gap-3">
+    <div className="flex justify-start gap-3">
       {Array.from({ length }).map((_, i) => (
         <input
           key={i}
@@ -43,7 +43,7 @@ export function OtpInput({ length, value, onChange }: OtpInputProps) {
           value={value[i] ?? ""}
           onChange={(e) => handleChange(i, e)}
           onKeyDown={(e) => handleKeyDown(i, e)}
-          className="h-14 w-12 rounded-lg border border-navy/15 text-center font-heading text-xl text-navy focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/10"
+          className="h-14 w-12 rounded-xl border border-navy/10 bg-navy/[0.03] text-center font-heading text-xl text-navy focus:border-navy focus:bg-white focus:outline-none focus:ring-2 focus:ring-navy/10"
         />
       ))}
     </div>

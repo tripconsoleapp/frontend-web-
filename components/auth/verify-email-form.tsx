@@ -18,19 +18,16 @@ export function VerifyEmailForm({ email }: { email: string }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col items-center gap-6 text-center"
-    >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint/40 text-navy">
-        <Mail size={24} />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-mint/40 text-navy">
+        <Mail size={20} />
       </span>
 
       <div>
-        <h1 className="font-heading text-2xl font-semibold text-navy">
+        <h1 className="text-[2.5rem] font-heading font-semibold leading-[1.02] text-navy">
           Verify your email
         </h1>
-        <p className="mt-2 font-body text-sm text-text-grey">
+        <p className="mt-2 font-body text-base text-text-grey">
           We&rsquo;ve sent a 6-digit verification code to{" "}
           <span className="font-semibold text-navy">{email}</span>. Enter it
           below to activate your account.
@@ -43,14 +40,15 @@ export function VerifyEmailForm({ email }: { email: string }) {
         Verify & Continue
       </Button>
 
-      <ResendCountdown seconds={30} />
-
-      <Link
-        href="/signup/create"
-        className="font-body text-sm font-medium text-navy underline"
-      >
-        Change email address
-      </Link>
+      <div className="flex items-center justify-between">
+        <ResendCountdown seconds={30} />
+        <Link
+          href="/signup/create"
+          className="font-body text-base font-medium text-navy underline"
+        >
+          Change email address
+        </Link>
+      </div>
     </form>
   );
 }

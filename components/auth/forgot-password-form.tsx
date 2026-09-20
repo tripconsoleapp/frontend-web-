@@ -29,27 +29,27 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint/40 text-navy">
-          <CheckCircle2 size={26} />
+      <div className="flex flex-col gap-4">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-mint/40 text-navy">
+          <CheckCircle2 size={22} />
         </span>
-        <h1 className="font-heading text-2xl font-semibold text-navy">
+        <h1 className="text-[2.5rem] font-heading font-semibold leading-[1.02] text-navy">
           Check your inbox
         </h1>
-        <p className="font-body text-sm text-text-grey">
+        <p className="font-body text-base text-text-grey">
           We sent a reset link to{" "}
           <span className="font-semibold text-navy">{email}</span>.
         </p>
         <button
           type="button"
           onClick={() => setSent(false)}
-          className="font-body text-sm font-medium text-orange hover:underline"
+          className="self-start font-body text-base font-medium text-orange hover:underline"
         >
           Resend email
         </button>
         <Link
           href="/login"
-          className="font-body text-sm text-text-grey hover:text-navy"
+          className="font-body text-base text-text-grey hover:text-navy"
         >
           Back to Login
         </Link>
@@ -59,14 +59,14 @@ export function ForgotPasswordForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint/40 text-navy">
-          <KeyRound size={22} />
+      <div className="flex flex-col gap-3">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-mint/40 text-navy">
+          <KeyRound size={20} />
         </span>
-        <h1 className="font-heading text-2xl font-semibold text-navy">
+        <h1 className="text-[2.5rem] font-heading font-semibold leading-[1.02] text-navy">
           Reset your password
         </h1>
-        <p className="font-body text-sm text-text-grey">
+        <p className="font-body text-base text-text-grey">
           Enter your registered email or mobile number and we&rsquo;ll help
           you get back in.
         </p>
@@ -124,7 +124,7 @@ export function ForgotPasswordForm() {
 
       <Link
         href="/login"
-        className="text-center font-body text-sm text-text-grey hover:text-navy"
+        className="font-body text-base text-text-grey hover:text-navy"
       >
         Back to Login
       </Link>
