@@ -39,8 +39,8 @@ export function RoleSelector({ email }: { email: string }) {
   }
 
   return (
-    <div className="flex w-full max-w-3xl flex-col items-center gap-8">
-      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
         {ROLES.map((role) => (
           <RoleCard
             key={role.id}
@@ -54,13 +54,18 @@ export function RoleSelector({ email }: { email: string }) {
       </div>
 
       <div className="flex flex-col items-center gap-3">
-        <Button variant="accent" size="lg" onClick={handleContinue}>
+        <Button
+          variant="accent"
+          size="lg"
+          onClick={handleContinue}
+          className="w-full"
+        >
           Continue as {selectedRole.title}
         </Button>
         <button
           type="button"
           onClick={() => router.back()}
-          className="font-body text-sm text-text-grey hover:text-navy"
+          className="font-body text-base text-text-grey hover:text-navy"
         >
           Go Back
         </button>

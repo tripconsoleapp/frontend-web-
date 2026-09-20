@@ -27,11 +27,11 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-heading text-2xl font-semibold text-navy">
-          Welcome Back
+      <div>
+        <h1 className="text-[2.5rem] font-heading font-semibold leading-[1.02] text-navy">
+          Welcome back
         </h1>
-        <p className="mt-1 font-body text-sm text-text-grey">
+        <p className="mt-2 font-body text-base text-text-grey">
           Log in to your TripConsole account.
         </p>
       </div>
@@ -57,11 +57,11 @@ export function LoginForm() {
             required
             placeholder="you@school.edu"
           />
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <PasswordInput label="Password" required placeholder="••••••••" />
             <Link
               href="/forgot-password"
-              className="self-end font-body text-sm font-medium text-orange hover:underline"
+              className="self-end font-body text-base font-medium text-orange hover:underline"
             >
               Forgot Password?
             </Link>
@@ -88,7 +88,7 @@ export function LoginForm() {
             </Button>
           </div>
 
-          <p className="text-center font-body text-sm text-text-grey">
+          <p className="text-center font-body text-base text-text-grey">
             Don&rsquo;t have an account?{" "}
             <Link href="/signup" className="font-medium text-navy underline">
               Sign Up
