@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "motion/react";
 import { Heart, MapPin } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/mock-trips";
@@ -12,8 +13,12 @@ export function TemplateBrowseCard({ template }: { template: Template }) {
   const [saved, setSaved] = useState(false);
 
   return (
-    <div className="group flex flex-col gap-3">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-navy/5">
+    <motion.div
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      className="group flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-navy/10"
+    >
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-navy/5">
         <Link
           href={`/templates/${template.id}`}
           className="absolute inset-0 z-0"
@@ -40,7 +45,10 @@ export function TemplateBrowseCard({ template }: { template: Template }) {
         </button>
       </div>
 
-      <Link href={`/templates/${template.id}`} className="flex flex-col gap-1">
+      <Link
+        href={`/templates/${template.id}`}
+        className="flex flex-col gap-1 px-1 pb-1"
+      >
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-heading text-base font-semibold text-navy">
             {template.name}
@@ -57,6 +65,6 @@ export function TemplateBrowseCard({ template }: { template: Template }) {
           {template.groupTypes.map((type) => GROUP_TYPE_LABELS[type]).join(", ")}
         </p>
       </Link>
-    </div>
+    </motion.div>
   );
 }

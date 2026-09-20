@@ -10,10 +10,10 @@ export function FeaturedTemplates() {
   );
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-20 sm:px-8">
+    <section className="mx-auto max-w-6xl px-6 py-24 sm:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-heading text-4xl font-bold text-navy sm:text-5xl">
+          <h2 className="max-w-xl text-[clamp(1.8rem,3.1vw,2.8rem)] font-heading font-bold leading-[1.02] text-navy">
             Explore trip templates
           </h2>
           <p className="mt-2 max-w-md font-body text-base text-text-grey">

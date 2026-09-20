@@ -183,8 +183,14 @@
   --color-border: var(--color-border);
   --color-ring: var(--color-ring);
 
-  --font-heading: var(--font-outfit);
-  --font-body: var(--font-work-sans);
+  /* DM Sans carries both headings and body — the two aren't meant to look
+     like different typefaces here. Fraunces is a separate, deliberately
+     rare accent: reserved for headline "moments" (hero emphasis, pull
+     quotes, marketing taglines) via .font-serif, never a general heading
+     font. See the "headline moments" block below. */
+  --font-heading: var(--font-dm-sans);
+  --font-body: var(--font-dm-sans);
+  --font-serif: var(--font-fraunces);
 }
 
 body {
@@ -200,6 +206,18 @@ h4,
 h5,
 h6 {
   font-family: var(--font-heading);
+  letter-spacing: -0.03em;
+}
+
+/* ============================================================
+   HEADLINE MOMENTS — Fraunces is intentionally rare. Reach for
+   .font-serif only on hero emphasis words, pull quotes, and
+   marketing taglines — never as a general heading font.
+   ============================================================ */
+.font-serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 /* ============================================================

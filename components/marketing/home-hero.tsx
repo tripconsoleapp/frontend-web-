@@ -12,12 +12,12 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 
 const HEADLINE_WORDS = [
-  "Plan",
-  "every",
-  "trip",
-  "from",
-  "one",
-  "console.",
+  { text: "Plan", emphasis: false },
+  { text: "every", emphasis: false },
+  { text: "trip", emphasis: false },
+  { text: "from", emphasis: false },
+  { text: "one", emphasis: true },
+  { text: "console.", emphasis: true },
 ];
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
@@ -82,7 +82,7 @@ export function HomeHero() {
 
       <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 pb-24 pt-40 sm:px-8">
         <h1
-          aria-label={HEADLINE_WORDS.join(" ")}
+          aria-label={HEADLINE_WORDS.map((w) => w.text).join(" ")}
           className="max-w-3xl text-[clamp(3rem,6vw,5.5rem)] font-heading font-extrabold leading-[0.95] text-white"
         >
           <motion.span
@@ -92,16 +92,16 @@ export function HomeHero() {
             transition={{ staggerChildren: 0.07, delayChildren: 0.05 }}
             className="inline"
           >
-            {HEADLINE_WORDS.map((word, index) => (
+            {HEADLINE_WORDS.map(({ text, emphasis }, index) => (
               <span
                 key={index}
                 className="inline-block overflow-hidden pb-1 align-bottom"
               >
                 <motion.span
                   variants={wordVariants}
-                  className="inline-block"
+                  className={emphasis ? "font-serif inline-block italic" : "inline-block"}
                 >
-                  {word}
+                  {text}
                   {index < HEADLINE_WORDS.length - 1 ? " " : ""}
                 </motion.span>
               </span>

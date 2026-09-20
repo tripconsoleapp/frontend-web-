@@ -20,9 +20,9 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="bg-white px-6 py-20 sm:px-8">
+    <section className="bg-white px-6 py-24 sm:px-8">
       <div className="mx-auto max-w-5xl">
-        <h2 className="text-center font-heading text-4xl font-semibold text-navy sm:text-5xl">
+        <h2 className="text-center text-[clamp(1.8rem,3.1vw,2.8rem)] font-heading font-semibold leading-[1.02] text-navy">
           How it works
         </h2>
 
