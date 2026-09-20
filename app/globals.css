@@ -198,3 +198,74 @@ h5,
 h6 {
   font-family: var(--font-heading);
 }
+
+/* ============================================================
+   LEAFLET MAP — route pins and chrome for the Destinations &
+   Route map (components/trips/leaflet-route-map.tsx). Pins are
+   rendered as raw HTML via L.divIcon, outside React, so their
+   shape/animation lives here rather than as Tailwind classes.
+   ============================================================ */
+.leaflet-container {
+  font-family: var(--font-body);
+  background: var(--color-mint-100);
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+  color: var(--color-text-grey);
+  background: color-mix(in srgb, var(--color-white) 85%, transparent);
+}
+
+.route-pin-icon {
+  background: transparent;
+  border: none;
+}
+
+.route-pin-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: route-pin-bounce-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.route-pin-circle {
+  display: flex;
+  height: 28px;
+  width: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 2px solid var(--color-white);
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+.route-pin-point {
+  margin-top: -2px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes route-pin-bounce-in {
+  0% {
+    transform: translateY(-18px) scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(2px) scale(1.08);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-1px) scale(0.98);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}

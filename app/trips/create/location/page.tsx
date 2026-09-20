@@ -7,15 +7,10 @@ export default async function ChooseLocationPage({
   searchParams: Promise<{ template?: string }>;
 }) {
   const { template } = await searchParams;
-  const nextParams = new URLSearchParams();
-  if (template) nextParams.set("template", template);
-  const query = nextParams.toString();
 
   return (
     <AppShell>
-      <LocationPicker
-        nextHref={`/trips/create/destinations${query ? `?${query}` : ""}`}
-      />
+      <LocationPicker basePath="/trips/create/destinations" template={template} />
     </AppShell>
   );
 }

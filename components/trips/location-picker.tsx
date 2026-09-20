@@ -7,30 +7,28 @@ import { motion } from "motion/react";
 import { cn } from "@/lib/cn";
 import { buttonVariants } from "@/components/ui/button";
 import { CreateStepper } from "@/components/trips/create-stepper";
-import { MapLocation, StylizedMap } from "@/components/trips/stylized-map";
-
-const LOCATIONS: MapLocation[] = [
-  { id: "kochi", name: "Kochi", x: 150, y: 220 },
-  { id: "munnar", name: "Munnar", x: 260, y: 260 },
-  { id: "alleppey", name: "Alleppey", x: 140, y: 330 },
-  { id: "thekkady", name: "Thekkady", x: 235, y: 390 },
-  { id: "wayanad", name: "Wayanad", x: 270, y: 90 },
-  { id: "kovalam", name: "Kovalam", x: 120, y: 540 },
-];
+import { StylizedMap } from "@/components/trips/stylized-map";
+import { KERALA_LOCATIONS } from "@/lib/kerala-locations";
 
 const RECENT_LOCATIONS = ["Kochi International Airport", "Munnar Tea Museum"];
 
-export function LocationPicker({ nextHref }: { nextHref: string }) {
+export function LocationPicker({
+  basePath,
+  template,
+}: {
+  basePath: string;
+  template?: string;
+}) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [importUrl, setImportUrl] = useState("");
   const [importedLabel, setImportedLabel] = useState<string | null>(null);
 
-  const filtered = LOCATIONS.filter((loc) =>
+  const filtered = KERALA_LOCATIONS.filter((loc) =>
     loc.name.toLowerCase().includes(search.toLowerCase())
   );
-  const selected = LOCATIONS.find((loc) => loc.id === selectedId);
+  const selected = KERALA_LOCATIONS.find((loc) => loc.id === selectedId);
 
   function selectLocation(id: string) {
     setSelectedId(id);
@@ -46,7 +44,11 @@ export function LocationPicker({ nextHref }: { nextHref: string }) {
   }
 
   function handleConfirm() {
-    router.push(nextHref);
+    const params = new URLSearchParams();
+    if (template) params.set("template", template);
+    if (selected) params.set("start", selected.id);
+    else if (importedLabel) params.set("startLabel", importedLabel);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   const hasSelection = Boolean(selected || importedLabel);
