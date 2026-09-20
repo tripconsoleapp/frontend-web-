@@ -43,8 +43,8 @@ export function TripTypeCard({
         {icon}
       </span>
       <div>
-        <h3 className="font-heading font-semibold text-navy">{title}</h3>
-        <p className="mt-1 font-body text-sm text-text-grey">{description}</p>
+        <h3 className="font-heading text-base font-semibold text-navy">{title}</h3>
+        <p className="mt-1 font-body text-base text-text-grey">{description}</p>
       </div>
     </motion.button>
   );

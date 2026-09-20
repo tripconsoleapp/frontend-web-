@@ -33,14 +33,14 @@ export function TripSummaryPanel({
   dateRangeLabel,
 }: TripSummaryPanelProps) {
   return (
-    <div className="sticky top-8 flex flex-col gap-5 overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-lg shadow-navy/5">
+    <div className="sticky top-8 flex flex-col gap-4 overflow-hidden rounded-2xl bg-white shadow-lg shadow-navy/10">
       <div className="flex flex-col gap-4 p-6">
         <p className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">
           Trip Summary
         </p>
 
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/5 text-navy">
+          <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/5 text-navy">
             <Tag size={15} />
           </span>
           <div>
@@ -50,7 +50,7 @@ export function TripSummaryPanel({
         </div>
 
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/5 text-navy">
+          <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/5 text-navy">
             <MapPin size={15} />
           </span>
           <div>
@@ -60,7 +60,7 @@ export function TripSummaryPanel({
         </div>
 
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/5 text-navy">
+          <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/5 text-navy">
             <Calendar size={15} />
           </span>
           <div>

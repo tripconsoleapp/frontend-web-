@@ -11,10 +11,15 @@ const variantClasses: Record<ButtonVariant, string> = {
   ghost: "text-navy hover:bg-navy/5",
 };
 
+/* Buttons are the highest-emphasis interactive element, so they carry
+   the roundest corners in the system — cards use rounded-2xl (16px),
+   inputs use rounded-xl (12px), buttons use a full pill. Text sizes
+   collapse "lg" into the same 16px body size as "md" so pages that mix
+   button sizes don't pick up a one-off font size found nowhere else. */
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-4 py-2 text-sm rounded-md",
-  md: "px-6 py-3 text-base rounded-md",
-  lg: "px-8 py-4 text-lg rounded-lg",
+  sm: "px-4 py-2 text-sm rounded-full",
+  md: "px-6 py-3 text-base rounded-full",
+  lg: "px-8 py-4 text-base rounded-full",
 };
 
 export function buttonVariants({

@@ -17,8 +17,8 @@ export function EmptyDashboard({ name }: { name: string }) {
             description="Whether it's a group trip or a pilgrimage, we'll guide you step by step."
           />
         </div>
-        <div className="flex flex-col justify-center gap-4 rounded-2xl border border-navy/10 bg-white p-6 lg:col-span-2">
-          <h2 className="font-heading text-base font-semibold text-navy">
+        <div className="flex flex-col justify-center gap-4 rounded-2xl bg-white p-6 shadow-sm lg:col-span-2">
+          <h2 className="font-heading text-2xl font-semibold text-navy">
             Why TripConsole
           </h2>
           <ValueList />
@@ -30,10 +30,10 @@ export function EmptyDashboard({ name }: { name: string }) {
       <PilgrimageBanner />
 
       <div>
-        <h2 className="font-heading text-lg font-semibold text-navy">
+        <h2 className="font-heading text-2xl font-semibold text-navy">
           Explore Templates
         </h2>
-        <p className="mt-1 font-body text-sm text-text-grey">
+        <p className="mt-1 font-body text-base text-text-grey">
           Not sure where to start? Try a ready-made plan.
         </p>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

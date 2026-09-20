@@ -16,12 +16,12 @@ export interface DestinationStop {
 
 export function StartStopCard({ name }: { name: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-navy/10 border-l-[3px] border-l-orange bg-navy/[0.03] px-4 py-3.5 shadow-sm">
+    <div className="flex items-center gap-3 rounded-xl border-l-[3px] border-l-orange bg-navy/[0.03] px-4 py-4 shadow-sm">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy font-body text-xs font-bold text-white">
         1
       </span>
       <div className="flex-1">
-        <p className="font-body text-sm font-semibold text-navy">{name}</p>
+        <p className="font-body text-base font-semibold text-navy">{name}</p>
         <span className="mt-0.5 inline-block rounded-full bg-mint/40 px-2 py-0.5 font-body text-[10px] font-semibold uppercase tracking-wide text-navy">
           Starting Point
         </span>
@@ -54,7 +54,7 @@ export function DestinationStopCard({
       transition={{ duration: 0.25 }}
       whileDrag={{ scale: 1.02, boxShadow: "0 12px 28px rgba(45,62,80,0.16)" }}
       whileHover={{ y: -2 }}
-      className="flex items-start gap-3 rounded-xl border border-navy/10 bg-white px-4 py-3.5 shadow-sm transition-shadow hover:shadow-md hover:shadow-navy/10"
+      className="flex items-start gap-3 rounded-xl bg-white px-4 py-4 shadow-sm transition-shadow hover:shadow-md hover:shadow-navy/10"
     >
       <button
         type="button"
@@ -67,7 +67,7 @@ export function DestinationStopCard({
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-body text-sm font-semibold text-navy">
+          <p className="font-body text-base font-semibold text-navy">
             {stop.name}
           </p>
           <span className="rounded-full bg-orange/10 px-2 py-0.5 font-body text-[10px] font-semibold text-orange">

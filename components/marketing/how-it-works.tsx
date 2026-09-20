@@ -22,7 +22,7 @@ export function HowItWorks() {
   return (
     <section className="bg-white px-6 py-20 sm:px-8">
       <div className="mx-auto max-w-5xl">
-        <h2 className="text-center font-heading text-3xl font-semibold text-navy">
+        <h2 className="text-center font-heading text-4xl font-semibold text-navy sm:text-5xl">
           How it works
         </h2>
 
@@ -38,7 +38,7 @@ export function HowItWorks() {
               <h3 className="font-heading font-semibold text-navy">
                 {label}
               </h3>
-              <p className="font-body text-sm text-text-grey">
+              <p className="font-body text-base text-text-grey">
                 {description}
               </p>
             </div>

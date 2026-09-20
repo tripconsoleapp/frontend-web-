@@ -23,8 +23,11 @@
   --color-orange: #ff6b35;
   --color-mint: #a8d5c5;
   --color-white: #ffffff;
-  --color-text-dark: #1a1a1a;
-  --color-text-grey: #666666;
+  /* Navy-tinted, not neutral: both derive from --color-navy's hue rather
+     than a flat grayscale ramp, so body text never reads as pure
+     black/gray against our warm-navy brand. */
+  --color-text-dark: #1b2530;
+  --color-text-grey: #5b6b7a;
 
   /* Navy/mint tints used only by decorative illustrations
      (e.g. PhotoPanel's SVG) that need shades beyond the single

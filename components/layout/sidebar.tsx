@@ -28,7 +28,7 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-20 flex w-60 flex-col bg-navy py-6">
       <Link
         href="/dashboard"
-        className="px-6 pb-8 font-heading text-xl font-semibold text-white"
+        className="px-6 pb-8 font-heading text-base font-bold text-white"
       >
         TripConsole
       </Link>
@@ -41,7 +41,7 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 font-body text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-3 font-body text-base font-medium transition-colors",
                 active
                   ? "bg-orange text-white"
                   : "text-white/70 hover:bg-white/5 hover:text-white"

@@ -13,16 +13,16 @@ export function FeaturedTemplates() {
     <section className="mx-auto max-w-6xl px-6 py-20 sm:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-heading text-3xl font-bold text-navy sm:text-4xl">
+          <h2 className="font-heading text-4xl font-bold text-navy sm:text-5xl">
             Explore trip templates
           </h2>
-          <p className="mt-2 max-w-md font-body text-text-grey">
+          <p className="mt-2 max-w-md font-body text-base text-text-grey">
             Ready-made itineraries for schools, families, and pilgrim groups.
           </p>
         </div>
         <Link
           href="/templates"
-          className="font-body text-sm font-semibold text-navy underline"
+          className="font-body text-base font-semibold text-navy underline"
         >
           Browse all &rarr;
         </Link>

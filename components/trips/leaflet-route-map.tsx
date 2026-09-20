@@ -112,7 +112,7 @@ function CompactView({ stop }: { stop: KeralaLocation }) {
 function ZoomControls() {
   const map = useMap();
   return (
-    <div className="absolute bottom-4 right-4 z-[800] flex flex-col overflow-hidden rounded-lg border border-navy/10 bg-white shadow-lg">
+    <div className="absolute bottom-4 right-4 z-[800] flex flex-col overflow-hidden rounded-lg bg-white shadow-lg">
       <button
         type="button"
         onClick={() => map.zoomIn()}
@@ -188,7 +188,7 @@ function MapSearchOverlay({
 
   return (
     <div className="absolute left-4 top-4 z-[800] w-64">
-      <div className="flex items-center gap-2 rounded-full border border-navy/10 bg-white px-4 py-2.5 shadow-lg">
+      <div className="flex items-center gap-2 rounded-full bg-white px-4 py-3 shadow-lg">
         <Search size={15} className="shrink-0 text-text-grey" />
         <input
           value={query}
@@ -196,7 +196,7 @@ function MapSearchOverlay({
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 120)}
           placeholder="Add a destination..."
-          className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
+          className="w-full bg-transparent font-body text-base text-navy placeholder:text-text-grey/60 focus:outline-none"
         />
         {query && (
           <button
@@ -211,9 +211,9 @@ function MapSearchOverlay({
       </div>
 
       {focused && query && (
-        <div className="mt-2 overflow-hidden rounded-xl border border-navy/10 bg-white shadow-lg">
+        <div className="mt-2 overflow-hidden rounded-xl bg-white shadow-lg">
           {results.length === 0 ? (
-            <p className="px-4 py-3 font-body text-xs text-text-grey">
+            <p className="px-4 py-3 font-body text-base text-text-grey">
               No matches for &ldquo;{query}&rdquo;.
             </p>
           ) : (
@@ -226,7 +226,7 @@ function MapSearchOverlay({
                   onSelect(loc);
                   setQuery("");
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left font-body text-sm text-navy transition-colors hover:bg-orange/5"
+                className="flex w-full items-center gap-2 px-4 py-3 text-left font-body text-base text-navy transition-colors hover:bg-orange/5"
               >
                 {loc.name}
               </button>
@@ -258,7 +258,7 @@ export default function LeafletRouteMap({
   return (
     <div
       className={cn(
-        "relative h-full w-full overflow-hidden rounded-2xl border border-navy/10 shadow-lg shadow-navy/10",
+        "relative h-full w-full overflow-hidden rounded-2xl shadow-lg shadow-navy/10",
         compact && "shadow-none"
       )}
     >

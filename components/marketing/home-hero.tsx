@@ -114,7 +114,7 @@ export function HomeHero() {
           animate="visible"
           variants={fadeUpVariants}
           transition={{ delay: prefersReducedMotion ? 0 : 0.55 }}
-          className="max-w-xl font-body text-lg text-white/85"
+          className="max-w-xl font-body text-base text-white/85"
         >
           TripConsole brings your itineraries, bookings, and travel notes
           together in a single, clean workspace.

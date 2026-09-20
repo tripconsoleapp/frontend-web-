@@ -45,14 +45,14 @@ export function TemplateBrowseCard({ template }: { template: Template }) {
           <h3 className="font-heading text-base font-semibold text-navy">
             {template.name}
           </h3>
-          <span className="shrink-0 font-body text-sm font-semibold text-navy">
+          <span className="shrink-0 font-body text-base font-semibold text-navy">
             {formatCurrency(template.pricePerPerson)}
           </span>
         </div>
-        <p className="flex items-center gap-1 font-body text-sm text-text-grey">
+        <p className="flex items-center gap-1 font-body text-base text-text-grey">
           <MapPin size={13} /> {template.location}
         </p>
-        <p className="font-body text-xs text-text-grey">
+        <p className="font-body text-base text-text-grey">
           {template.durationLabel} &middot;{" "}
           {template.groupTypes.map((type) => GROUP_TYPE_LABELS[type]).join(", ")}
         </p>

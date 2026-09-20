@@ -16,7 +16,7 @@ export function ValueList({
       {features.map((feature) => (
         <li
           key={feature}
-          className="flex items-center gap-2.5 font-body text-sm text-text-grey"
+          className="flex items-center gap-3 font-body text-base text-text-grey"
         >
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-mint/40 text-navy">
             <Check size={12} />

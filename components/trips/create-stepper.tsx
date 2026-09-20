@@ -17,7 +17,7 @@ export function CreateStepper({ activeIndex }: { activeIndex: number }) {
           <div className="flex flex-col items-center gap-2">
             <span
               className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-body text-sm font-semibold transition-colors",
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-body text-base font-semibold transition-colors",
                 index < activeIndex
                   ? "bg-mint text-navy"
                   : index === activeIndex

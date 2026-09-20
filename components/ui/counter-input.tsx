@@ -19,8 +19,8 @@ export function CounterInput({
   max = 999,
 }: CounterInputProps) {
   return (
-    <div className="flex items-center justify-between rounded-md border border-navy/15 px-3.5 py-2.5">
-      <span className="font-body text-sm text-navy">{label}</span>
+    <div className="flex items-center justify-between rounded-xl bg-navy/[0.03] px-4 py-3">
+      <span className="font-body text-base text-navy">{label}</span>
       <div className="flex items-center gap-3">
         <motion.button
           type="button"
@@ -28,11 +28,11 @@ export function CounterInput({
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
           aria-label={`Decrease ${label}`}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-navy/20 text-navy transition-colors hover:bg-navy/5 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-navy shadow-sm transition-shadow hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Minus size={14} />
         </motion.button>
-        <span className="w-6 text-center font-body text-sm font-semibold text-navy">
+        <span className="w-6 text-center font-body text-base font-semibold text-navy">
           {value}
         </span>
         <motion.button
@@ -41,7 +41,7 @@ export function CounterInput({
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
           aria-label={`Increase ${label}`}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-navy/20 text-navy transition-colors hover:bg-navy/5 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-navy shadow-sm transition-shadow hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Plus size={14} />
         </motion.button>

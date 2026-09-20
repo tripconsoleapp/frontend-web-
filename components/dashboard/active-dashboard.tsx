@@ -41,12 +41,12 @@ export function ActiveDashboard({
 
       <div>
         <div className="flex items-center justify-between">
-          <h2 className="font-heading text-lg font-semibold text-navy">
+          <h2 className="font-heading text-2xl font-semibold text-navy">
             Your Trips
           </h2>
           <Link
             href="/trips"
-            className="font-body text-sm font-medium text-navy underline"
+            className="font-body text-base font-medium text-navy underline"
           >
             View All &rarr;
           </Link>
@@ -60,7 +60,7 @@ export function ActiveDashboard({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
-          <h2 className="font-heading text-lg font-semibold text-navy">
+          <h2 className="font-heading text-2xl font-semibold text-navy">
             Recommended for You
           </h2>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -78,7 +78,7 @@ export function ActiveDashboard({
             />
           </div>
         </div>
-        <div className="rounded-2xl border border-navy/10 bg-white p-6">
+        <div className="rounded-2xl bg-white p-6 shadow-sm">
           <RecentActivity />
         </div>
       </div>

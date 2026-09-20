@@ -12,7 +12,7 @@ export function DashboardTopBar({
   return (
     <div className="flex items-start justify-between">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-navy">
+        <h1 className="font-heading text-2xl font-bold text-navy leading-tight">
           Good morning, {name}
         </h1>
         <Badge variant="mint" className="mt-2 w-fit">

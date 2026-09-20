@@ -5,10 +5,10 @@ export function FinalCtaSection() {
   return (
     <section className="bg-navy px-6 py-20 sm:px-8">
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
-        <span className="font-heading text-2xl font-semibold text-white">
+        <span className="font-heading text-base font-bold text-white">
           TripConsole
         </span>
-        <p className="font-body text-lg text-white/70">
+        <p className="font-body text-base text-white/70">
           Institutional trip management, simplified.
         </p>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">

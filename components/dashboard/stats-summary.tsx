@@ -10,17 +10,17 @@ export function StatsSummary({
   counts: { active: number; completed: number; draft: number };
 }) {
   return (
-    <div className="flex h-full flex-col justify-center gap-5 rounded-2xl border border-navy/10 bg-white p-6">
-      <h2 className="font-heading text-base font-semibold text-navy">
+    <div className="flex h-full flex-col justify-center gap-4 rounded-2xl bg-white p-6 shadow-sm">
+      <h2 className="font-heading text-2xl font-semibold text-navy">
         Trip Overview
       </h2>
       <div className="grid grid-cols-3 gap-4">
         {LABELS.map(({ key, label }) => (
           <div key={key}>
-            <p className="font-heading text-2xl font-bold text-navy">
+            <p className="font-heading text-4xl font-bold text-navy">
               {counts[key]}
             </p>
-            <p className="font-body text-xs text-text-grey">{label}</p>
+            <p className="font-body text-base text-text-grey">{label}</p>
           </div>
         ))}
       </div>

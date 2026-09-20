@@ -113,8 +113,8 @@ export function AddDestinationModal({
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 flex min-w-0 max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
           >
-            <div className="flex items-center justify-between border-b border-navy/10 px-6 py-4">
-              <h2 className="font-heading text-lg font-semibold text-navy">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4">
+              <h2 className="font-heading text-2xl font-semibold text-navy">
                 {isEditing ? "Edit Destination" : "Add Destination"}
               </h2>
               <button
@@ -127,7 +127,7 @@ export function AddDestinationModal({
               </button>
             </div>
 
-            <div className="flex flex-col gap-5 overflow-y-auto px-6 py-5">
+            <div className="flex flex-col gap-4 overflow-y-auto px-6 pb-6">
               {!isEditing && (
                 <>
                   <div className="relative">
@@ -139,7 +139,7 @@ export function AddDestinationModal({
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search destination..."
-                      className="w-full rounded-md border border-navy/15 py-2.5 pl-9 pr-3 font-body text-sm text-navy placeholder:text-text-grey/60 focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/10"
+                      className="w-full rounded-xl border border-navy/10 bg-navy/[0.03] py-3 pl-9 pr-3 font-body text-base text-navy placeholder:text-text-grey/60 focus:border-navy focus:bg-white focus:outline-none focus:ring-2 focus:ring-navy/10"
                     />
                   </div>
 
@@ -155,7 +155,7 @@ export function AddDestinationModal({
                             type="button"
                             onClick={() => setSelectedId(loc.id)}
                             className={cn(
-                              "rounded-full border px-3 py-1.5 font-body text-xs font-medium transition-colors",
+                              "rounded-full border px-4 py-2 font-body text-base font-medium transition-colors",
                               selectedId === loc.id
                                 ? "border-orange bg-orange/10 text-orange"
                                 : "border-navy/15 text-navy hover:border-navy/30"
@@ -168,7 +168,7 @@ export function AddDestinationModal({
                     </div>
                   )}
 
-                  <div className="flex max-h-36 flex-col gap-1.5 overflow-y-auto">
+                  <div className="flex max-h-36 flex-col gap-2 overflow-y-auto">
                     {filtered.map((loc) => (
                       <button
                         key={loc.id}
@@ -182,13 +182,13 @@ export function AddDestinationModal({
                             : "border-navy/10 hover:border-navy/25"
                         )}
                       >
-                        <span className="font-body text-sm font-medium text-navy">
+                        <span className="font-body text-base font-medium text-navy">
                           {loc.name}
                         </span>
                       </button>
                     ))}
                     {filtered.length === 0 && (
-                      <p className="px-1 py-2 font-body text-sm text-text-grey">
+                      <p className="px-1 py-2 font-body text-base text-text-grey">
                         No matches for &ldquo;{search}&rdquo;.
                       </p>
                     )}
@@ -209,18 +209,18 @@ export function AddDestinationModal({
                 <p className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">
                   How long will you stay here?
                 </p>
-                <div className="mt-2 flex items-center justify-between rounded-full border border-navy/15 px-2 py-1.5">
+                <div className="mt-2 flex items-center justify-between rounded-full bg-navy/[0.03] px-2 py-2">
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setDays((d) => Math.max(1, d - 1))}
                     disabled={days <= 1}
                     aria-label="Decrease days"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-navy transition-colors hover:bg-navy/5 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-navy shadow-sm transition-shadow hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Minus size={14} />
                   </motion.button>
-                  <span className="font-body text-sm font-semibold text-navy">
+                  <span className="font-body text-base font-semibold text-navy">
                     {days} {days === 1 ? "Day" : "Days"}
                   </span>
                   <motion.button
@@ -228,7 +228,7 @@ export function AddDestinationModal({
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setDays((d) => Math.min(14, d + 1))}
                     aria-label="Increase days"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-navy transition-colors hover:bg-navy/5"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-navy shadow-sm transition-shadow hover:shadow-md"
                   >
                     <Plus size={14} />
                   </motion.button>
@@ -236,7 +236,7 @@ export function AddDestinationModal({
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="font-body text-sm text-navy">
+                <span className="font-body text-base text-navy">
                   Add overnight stay?
                 </span>
                 <Switch
@@ -247,7 +247,7 @@ export function AddDestinationModal({
               </div>
 
               {travelTime && (
-                <div className="flex items-center gap-2 rounded-lg bg-mint/15 px-3.5 py-2.5 font-body text-xs text-navy">
+                <div className="flex items-center gap-2 rounded-lg bg-mint/15 px-4 py-3 font-body text-base text-navy">
                   <Clock size={14} className="shrink-0 text-navy/70" />
                   Estimated travel time from {previousStop.name}:{" "}
                   <span className="font-semibold">{travelTime}</span>
@@ -255,11 +255,11 @@ export function AddDestinationModal({
               )}
             </div>
 
-            <div className="flex gap-3 border-t border-navy/10 px-6 py-4">
+            <div className="flex gap-3 bg-navy/[0.02] px-6 py-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-md border border-navy/15 py-2.5 font-body text-sm font-medium text-navy transition-colors hover:bg-navy/5"
+                className="flex-1 rounded-full border border-navy/15 py-3 font-body text-base font-medium text-navy transition-colors hover:bg-navy/5"
               >
                 Cancel
               </button>

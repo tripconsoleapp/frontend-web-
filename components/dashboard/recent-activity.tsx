@@ -24,10 +24,10 @@ const ACTIVITY = [
 export function RecentActivity() {
   return (
     <div>
-      <h2 className="font-heading text-base font-semibold text-navy">
+      <h2 className="font-heading text-2xl font-semibold text-navy">
         Recent Activity
       </h2>
-      <ul className="mt-3 flex flex-col gap-3">
+      <ul className="mt-4 flex flex-col gap-4">
         {ACTIVITY.map(({ icon: Icon, iconClass, text, time }, i) => (
           <li key={i} className="flex items-center gap-3">
             <span
@@ -36,8 +36,8 @@ export function RecentActivity() {
               <Icon size={15} />
             </span>
             <div className="flex flex-col">
-              <span className="font-body text-sm text-navy">{text}</span>
-              <span className="font-body text-xs text-text-grey">{time}</span>
+              <span className="font-body text-base text-navy">{text}</span>
+              <span className="font-body text-base text-text-grey">{time}</span>
             </div>
           </li>
         ))}
