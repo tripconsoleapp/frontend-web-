@@ -1,59 +1,51 @@
-import { DashboardTopBar } from "@/components/dashboard/dashboard-topbar";
-import { PlanTripCard } from "@/components/dashboard/plan-trip-card";
-import { ValueList } from "@/components/dashboard/value-list";
-import { QuickBookRow } from "@/components/dashboard/quick-book-row";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { WorkspaceHero } from "@/components/dashboard/workspace-hero";
+import { QuickOverview } from "@/components/dashboard/quick-overview";
+import { ServiceRail } from "@/components/dashboard/service-rail";
 import { PilgrimageBanner } from "@/components/dashboard/pilgrimage-banner";
-import { TemplateCard } from "@/components/dashboard/template-card";
+import { RecommendationRail } from "@/components/dashboard/recommendation-rail";
+import { Template, getTemplateById } from "@/lib/mock-templates";
+
+const RECOMMENDED_IDS = [
+  "sabarimala-pilgrimage",
+  "guruvayur-district",
+  "school-excursion",
+  "coorg-adventure",
+];
+
+const QUICK_STARTS = [
+  { label: "Start from Scratch", href: "/trips/create/loading" },
+  { label: "Use a Template", href: "/templates" },
+  { label: "Plan a Pilgrimage", href: "/pilgrimage" },
+];
 
 export function EmptyDashboard({ name }: { name: string }) {
+  const recommended = RECOMMENDED_IDS.map(getTemplateById).filter(
+    (template): template is Template => Boolean(template)
+  );
+
   return (
-    <div className="flex flex-col gap-8">
-      <DashboardTopBar name={name} roleLabel="Organizer" />
+    <div className="flex flex-col gap-10">
+      <DashboardHeader name={name} roleLabel="Organizer" />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <PlanTripCard
-            title="Plan Your First Trip"
-            description="Whether it's a group trip or a pilgrimage, we'll guide you step by step."
-          />
-        </div>
-        <div className="flex flex-col justify-center gap-4 rounded-2xl bg-white p-6 shadow-sm lg:col-span-2">
-          <h2 className="font-heading text-2xl font-semibold text-navy">
-            Why TripConsole
-          </h2>
-          <ValueList />
-        </div>
-      </div>
+      <WorkspaceHero
+        eyebrow="Welcome to TripConsole"
+        heading="Start organizing your first journey."
+        description="Create your first professional trip listing."
+        imageUrl="https://images.unsplash.com/photo-1658051161493-1d311c4c7b4d?auto=format&fit=crop&w=1600&q=80"
+        imageAlt="Kerala hills"
+        ctaLabel="Create Your First Listing"
+        ctaHref="/trips/new"
+        quickStarts={QUICK_STARTS}
+      />
 
-      <QuickBookRow />
+      <QuickOverview counts={{ active: 0, completed: 0, draft: 0 }} />
+
+      <ServiceRail />
 
       <PilgrimageBanner />
 
-      <div>
-        <h2 className="font-heading text-2xl font-semibold text-navy">
-          Explore Templates
-        </h2>
-        <p className="mt-1 font-body text-base text-text-grey">
-          Not sure where to start? Try a ready-made plan.
-        </p>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <TemplateCard
-            href="/templates/sabarimala-pilgrimage"
-            title="Sabarimala Pilgrimage"
-            description="Complete itinerary covering key temples and stops along the way."
-          />
-          <TemplateCard
-            href="/templates/guruvayur-district"
-            title="Guruvayur District"
-            description="Optimized schedule for visits and nearby attractions."
-          />
-          <TemplateCard
-            href="/templates/school-excursion"
-            title="School Excursion"
-            description="A balanced, budget-friendly plan for educational group trips."
-          />
-        </div>
-      </div>
+      <RecommendationRail templates={recommended} />
     </div>
   );
 }

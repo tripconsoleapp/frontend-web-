@@ -41,10 +41,10 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-3 font-body text-base font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-3 font-body text-base font-medium transition-all duration-200",
                 active
-                  ? "bg-orange text-white"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
+                  ? "bg-orange text-white shadow-sm shadow-orange/30"
+                  : "text-white/70 hover:translate-x-0.5 hover:bg-white/5 hover:text-white"
               )}
             >
               <Icon size={18} />

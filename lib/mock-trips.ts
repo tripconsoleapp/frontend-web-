@@ -12,6 +12,9 @@ export interface Trip {
   estimatedTotal?: number;
   invoiceAmount?: number;
   amountSettled?: number;
+  imageUrl: string;
+  tags: string[];
+  currentStepLabel?: string;
 }
 
 export const MOCK_TRIPS: Trip[] = [
@@ -25,6 +28,10 @@ export const MOCK_TRIPS: Trip[] = [
     status: "draft",
     progress: 40,
     estimatedTotal: 124800,
+    imageUrl:
+      "https://images.unsplash.com/photo-1585640036119-ce2bf9c502d8?auto=format&fit=crop&w=800&q=80",
+    tags: ["Adventure", "12 Travelers"],
+    currentStepLabel: "Destinations & Route",
   },
   {
     id: "heritage-south-trail",
@@ -35,6 +42,9 @@ export const MOCK_TRIPS: Trip[] = [
     travelers: 24,
     status: "submitted",
     invoiceAmount: 482000,
+    imageUrl:
+      "https://images.unsplash.com/photo-1644773182204-f0bf03cae0cb?auto=format&fit=crop&w=800&q=80",
+    tags: ["Heritage", "24 Travelers"],
   },
   {
     id: "munnar-nature-retreat",
@@ -45,6 +55,9 @@ export const MOCK_TRIPS: Trip[] = [
     travelers: 18,
     status: "submitted",
     invoiceAmount: 265000,
+    imageUrl:
+      "https://images.unsplash.com/photo-1658051161493-1d311c4c7b4d?auto=format&fit=crop&w=800&q=80",
+    tags: ["Nature", "18 Travelers"],
   },
   {
     id: "industrial-expo-visit",
@@ -55,6 +68,9 @@ export const MOCK_TRIPS: Trip[] = [
     travelers: 45,
     status: "verified",
     invoiceAmount: 815500,
+    imageUrl:
+      "https://images.unsplash.com/photo-1711192702535-eac61a78ecb0?auto=format&fit=crop&w=800&q=80",
+    tags: ["Corporate", "45 Travelers"],
   },
   {
     id: "kerala-pilgrimage-tour",
@@ -65,6 +81,9 @@ export const MOCK_TRIPS: Trip[] = [
     travelers: 30,
     status: "paid",
     amountSettled: 340000,
+    imageUrl:
+      "https://images.unsplash.com/photo-1644773182204-f0bf03cae0cb?auto=format&fit=crop&w=800&q=80",
+    tags: ["Pilgrimage", "30 Travelers"],
   },
   {
     id: "sabarimala-special",
@@ -75,6 +94,9 @@ export const MOCK_TRIPS: Trip[] = [
     travelers: 40,
     status: "complete",
     amountSettled: 512000,
+    imageUrl:
+      "https://images.unsplash.com/photo-1644773182204-f0bf03cae0cb?auto=format&fit=crop&w=800&q=80",
+    tags: ["Pilgrimage", "40 Travelers"],
   },
   {
     id: "school-excursion",
@@ -85,6 +107,9 @@ export const MOCK_TRIPS: Trip[] = [
     travelers: 22,
     status: "complete",
     amountSettled: 198000,
+    imageUrl:
+      "https://images.unsplash.com/photo-1704365159747-1f7b8913044f?auto=format&fit=crop&w=800&q=80",
+    tags: ["School Group", "22 Travelers"],
   },
 ];
 
@@ -122,6 +147,19 @@ export function getStatusBadgeClass(status: TripStatus) {
 
 export function getStatusAction(status: TripStatus) {
   return STATUS_ACTIONS[status];
+}
+
+export function getTripActionHref(trip: Trip) {
+  switch (trip.status) {
+    case "draft":
+      return `/trips/${trip.id}/edit`;
+    case "submitted":
+      return `/trips/${trip.id}/track`;
+    case "verified":
+      return `/trips/${trip.id}/pay`;
+    default:
+      return `/trips/${trip.id}/receipt`;
+  }
 }
 
 export function formatDateRange(start: string, end: string) {

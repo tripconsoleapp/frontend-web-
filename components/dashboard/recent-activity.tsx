@@ -27,9 +27,9 @@ export function RecentActivity() {
       <h2 className="font-heading text-2xl font-semibold text-navy">
         Recent Activity
       </h2>
-      <ul className="mt-4 flex flex-col gap-4">
+      <ul className="mt-5 flex flex-col divide-y divide-navy/10">
         {ACTIVITY.map(({ icon: Icon, iconClass, text, time }, i) => (
-          <li key={i} className="flex items-center gap-3">
+          <li key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconClass}`}
             >

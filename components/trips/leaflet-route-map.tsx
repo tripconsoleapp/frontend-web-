@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import { animate } from "motion";
-import { Minus, Plus, Search, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { Locate, Minus, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   KERALA_LOCATIONS,
@@ -16,11 +17,19 @@ import {
 
 const KOCHI_FALLBACK: [number, number] = [9.9312, 76.2673];
 
-function createPinIcon(number: number, variant: "start" | "stop") {
-  const bg = variant === "start" ? "#2D3E50" : "#FF6B35";
+function createPinIcon(
+  number: number,
+  variant: "start" | "stop",
+  selected: boolean
+) {
+  const isStart = variant === "start";
+  const bg = isStart ? "#2D3E50" : selected ? "#FF6B35" : "#FFFFFF";
+  const fg = isStart || selected ? "#FFFFFF" : "#2D3E50";
+  const border = isStart ? "" : selected ? "" : "border:2px solid #2D3E50;";
+  const size = selected ? 34 : 28;
   const html = `
     <div class="route-pin-wrap">
-      <div class="route-pin-circle" style="background:${bg}">${number}</div>
+      <div class="route-pin-circle" style="background:${bg};color:${fg};${border}width:${size}px;height:${size}px;">${number}</div>
       <div class="route-pin-point" style="border-top-color:${bg}"></div>
     </div>
   `;
@@ -74,20 +83,39 @@ function RouteLine({ stops }: { stops: KeralaLocation[] }) {
   return null;
 }
 
+function fitStopsView(map: L.Map, stops: KeralaLocation[]) {
+  if (stops.length === 0) return;
+  map.invalidateSize();
+  if (stops.length === 1) {
+    map.setView([stops[0].lat, stops[0].lng], 10, { animate: true });
+    return;
+  }
+  const bounds = L.latLngBounds(stops.map((s) => [s.lat, s.lng]));
+  map.fitBounds(bounds, { padding: [48, 48], animate: true, maxZoom: 11 });
+}
+
 function FitToStops({ stops }: { stops: KeralaLocation[] }) {
   const map = useMap();
 
   useEffect(() => {
-    if (stops.length === 0) return;
-    map.invalidateSize();
-    if (stops.length === 1) {
-      map.setView([stops[0].lat, stops[0].lng], 10, { animate: true });
-      return;
-    }
-    const bounds = L.latLngBounds(stops.map((s) => [s.lat, s.lng]));
-    map.fitBounds(bounds, { padding: [48, 48], animate: true, maxZoom: 11 });
+    fitStopsView(map, stops);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, stops.map((s) => s.id).join("-")]);
+
+  return null;
+}
+
+/** Pans to a single selected stop without disturbing the overall route fit. */
+function FocusStop({ stop }: { stop: KeralaLocation | undefined }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!stop) return;
+    map.flyTo([stop.lat, stop.lng], Math.max(map.getZoom(), 11), {
+      duration: 0.6,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, stop?.id]);
 
   return null;
 }
@@ -109,10 +137,16 @@ function CompactView({ stop }: { stop: KeralaLocation }) {
   return null;
 }
 
-function ZoomControls() {
+function ZoomControls({
+  stops,
+  showFit,
+}: {
+  stops: KeralaLocation[];
+  showFit: boolean;
+}) {
   const map = useMap();
   return (
-    <div className="absolute bottom-4 right-4 z-[800] flex flex-col overflow-hidden rounded-lg bg-white shadow-lg">
+    <div className="absolute bottom-6 right-6 z-[800] flex flex-col overflow-hidden rounded-xl bg-white shadow-md">
       <button
         type="button"
         onClick={() => map.zoomIn()}
@@ -125,10 +159,24 @@ function ZoomControls() {
         type="button"
         onClick={() => map.zoomOut()}
         aria-label="Zoom out"
-        className="flex h-9 w-9 items-center justify-center text-navy transition-colors hover:bg-orange/10 hover:text-orange"
+        className={cn(
+          "flex h-9 w-9 items-center justify-center text-navy transition-colors hover:bg-orange/10 hover:text-orange",
+          showFit && "border-b border-navy/10"
+        )}
       >
         <Minus size={16} />
       </button>
+      {showFit && (
+        <button
+          type="button"
+          onClick={() => fitStopsView(map, stops)}
+          aria-label="Fit route"
+          title="Fit route"
+          className="flex h-9 w-9 items-center justify-center text-navy transition-colors hover:bg-orange/10 hover:text-orange"
+        >
+          <Locate size={15} />
+        </button>
+      )}
     </div>
   );
 }
@@ -187,16 +235,21 @@ function MapSearchOverlay({
   );
 
   return (
-    <div className="absolute left-4 top-4 z-[800] w-64">
-      <div className="flex items-center gap-2 rounded-full bg-white px-4 py-3 shadow-lg">
+    <div className="absolute left-6 top-6 z-[800] w-[320px]">
+      <div
+        className={cn(
+          "flex items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-md ring-1 ring-transparent transition-shadow",
+          focused && "ring-orange/40 shadow-lg"
+        )}
+      >
         <Search size={15} className="shrink-0 text-text-grey" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 120)}
-          placeholder="Add a destination..."
-          className="w-full bg-transparent font-body text-base text-navy placeholder:text-text-grey/60 focus:outline-none"
+          placeholder="Search a destination..."
+          className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
         />
         {query && (
           <button
@@ -210,30 +263,43 @@ function MapSearchOverlay({
         )}
       </div>
 
-      {focused && query && (
-        <div className="mt-2 overflow-hidden rounded-xl bg-white shadow-lg">
-          {results.length === 0 ? (
-            <p className="px-4 py-3 font-body text-base text-text-grey">
-              No matches for &ldquo;{query}&rdquo;.
-            </p>
-          ) : (
-            results.map((loc) => (
-              <button
-                key={loc.id}
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  onSelect(loc);
-                  setQuery("");
-                }}
-                className="flex w-full items-center gap-2 px-4 py-3 text-left font-body text-base text-navy transition-colors hover:bg-orange/5"
-              >
-                {loc.name}
-              </button>
-            ))
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {focused && query && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15 }}
+            className="mt-2 overflow-hidden rounded-xl bg-white shadow-lg"
+          >
+            {results.length === 0 ? (
+              <p className="px-4 py-3 font-body text-sm text-text-grey">
+                No matches for &ldquo;{query}&rdquo;.
+              </p>
+            ) : (
+              results.map((loc) => (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onSelect(loc);
+                    setQuery("");
+                  }}
+                  className="flex w-full flex-col items-start px-4 py-2.5 text-left transition-colors hover:bg-orange/5"
+                >
+                  <span className="font-body text-sm font-medium text-navy">
+                    {loc.name}
+                  </span>
+                  <span className="font-body text-xs text-text-grey">
+                    {loc.district}
+                  </span>
+                </button>
+              ))
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -243,6 +309,9 @@ interface LeafletRouteMapProps {
   compact?: boolean;
   onQuickAdd?: (location: KeralaLocation) => void;
   excludeIds?: string[];
+  selectedId?: string | null;
+  onSelectStop?: (id: string) => void;
+  showFitControl?: boolean;
 }
 
 export default function LeafletRouteMap({
@@ -250,7 +319,11 @@ export default function LeafletRouteMap({
   compact = false,
   onQuickAdd,
   excludeIds = [],
+  selectedId = null,
+  onSelectStop,
+  showFitControl = true,
 }: LeafletRouteMapProps) {
+  const focusedStop = stops.find((s) => s.id === selectedId);
   const initialCenter: [number, number] = stops[0]
     ? [stops[0].lat, stops[0].lng]
     : KOCHI_FALLBACK;
@@ -258,7 +331,7 @@ export default function LeafletRouteMap({
   return (
     <div
       className={cn(
-        "relative h-full w-full overflow-hidden rounded-2xl shadow-lg shadow-navy/10",
+        "relative h-full w-full overflow-hidden rounded-3xl shadow-lg shadow-navy/10",
         compact && "shadow-none"
       )}
     >
@@ -284,13 +357,21 @@ export default function LeafletRouteMap({
           <Marker
             key={stop.id}
             position={[stop.lat, stop.lng]}
-            icon={createPinIcon(index + 1, index === 0 ? "start" : "stop")}
+            icon={createPinIcon(
+              index + 1,
+              index === 0 ? "start" : "stop",
+              stop.id === selectedId
+            )}
+            eventHandlers={
+              onSelectStop ? { click: () => onSelectStop(stop.id) } : undefined
+            }
           />
         ))}
 
         {!compact && <RouteLine stops={stops} />}
         {!compact && <FitToStops stops={stops} />}
-        {!compact && <ZoomControls />}
+        {!compact && <FocusStop stop={focusedStop} />}
+        {!compact && <ZoomControls stops={stops} showFit={showFitControl} />}
         {compact && stops[0] && <CompactView stop={stops[0]} />}
       </MapContainer>
 

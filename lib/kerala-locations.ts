@@ -1,6 +1,8 @@
 export interface KeralaLocation {
   id: string;
   name: string;
+  /** District/state label shown as a subtitle, e.g. "Idukki, Kerala". */
+  district: string;
   /** Legacy 400x600 coordinate space used by the flat illustrated map. */
   x: number;
   y: number;
@@ -10,11 +12,12 @@ export interface KeralaLocation {
 }
 
 export const KERALA_LOCATIONS: KeralaLocation[] = [
-  { id: "kochi", name: "Kochi", x: 150, y: 220, lat: 9.9312, lng: 76.2673 },
-  { id: "munnar", name: "Munnar", x: 260, y: 260, lat: 10.0889, lng: 77.0595 },
+  { id: "kochi", name: "Kochi", district: "Ernakulam, Kerala", x: 150, y: 220, lat: 9.9312, lng: 76.2673 },
+  { id: "munnar", name: "Munnar", district: "Idukki, Kerala", x: 260, y: 260, lat: 10.0889, lng: 77.0595 },
   {
     id: "alleppey",
     name: "Alleppey",
+    district: "Alappuzha, Kerala",
     x: 140,
     y: 330,
     lat: 9.4981,
@@ -23,13 +26,14 @@ export const KERALA_LOCATIONS: KeralaLocation[] = [
   {
     id: "thekkady",
     name: "Thekkady",
+    district: "Idukki, Kerala",
     x: 235,
     y: 390,
     lat: 9.6047,
     lng: 77.1683,
   },
-  { id: "wayanad", name: "Wayanad", x: 270, y: 90, lat: 11.6854, lng: 76.132 },
-  { id: "kovalam", name: "Kovalam", x: 120, y: 540, lat: 8.4004, lng: 76.9784 },
+  { id: "wayanad", name: "Wayanad", district: "Wayanad, Kerala", x: 270, y: 90, lat: 11.6854, lng: 76.132 },
+  { id: "kovalam", name: "Kovalam", district: "Thiruvananthapuram, Kerala", x: 120, y: 540, lat: 8.4004, lng: 76.9784 },
 ];
 
 export function getKeralaLocation(id: string) {

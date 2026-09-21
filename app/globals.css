@@ -246,7 +246,7 @@ h6 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: route-pin-bounce-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: route-pin-fade-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .route-pin-circle {
@@ -262,6 +262,7 @@ h6 {
   font-size: 12px;
   font-weight: 700;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease;
 }
 
 .route-pin-point {
@@ -274,19 +275,19 @@ h6 {
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
 }
 
-@keyframes route-pin-bounce-in {
-  0% {
-    transform: translateY(-18px) scale(0.4);
+@keyframes route-pin-fade-in {
+  from {
+    transform: scale(0.7);
     opacity: 0;
   }
-  60% {
-    transform: translateY(2px) scale(1.08);
+  to {
+    transform: scale(1);
     opacity: 1;
   }
-  80% {
-    transform: translateY(-1px) scale(0.98);
-  }
-  100% {
-    transform: translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-pin-wrap {
+    animation: none;
   }
 }

@@ -1,13 +1,21 @@
-import Link from "next/link";
-import { DashboardTopBar } from "@/components/dashboard/dashboard-topbar";
-import { PlanTripCard } from "@/components/dashboard/plan-trip-card";
-import { StatsSummary } from "@/components/dashboard/stats-summary";
-import { QuickBookRow } from "@/components/dashboard/quick-book-row";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { WorkspaceHero } from "@/components/dashboard/workspace-hero";
+import { QuickOverview } from "@/components/dashboard/quick-overview";
+import { ServiceRail } from "@/components/dashboard/service-rail";
 import { PilgrimageBanner } from "@/components/dashboard/pilgrimage-banner";
-import { TemplateCard } from "@/components/dashboard/template-card";
+import { RecommendationRail } from "@/components/dashboard/recommendation-rail";
+import { ActiveTripRail } from "@/components/dashboard/active-trip-rail";
+import { UpcomingTimeline } from "@/components/dashboard/upcoming-timeline";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
-import { TripCard } from "@/components/trips/trip-card";
-import { Trip, getTripCounts } from "@/lib/mock-trips";
+import { Trip, getTripActionHref, getTripCounts } from "@/lib/mock-trips";
+import { Template, getTemplateById } from "@/lib/mock-templates";
+
+const RECOMMENDED_IDS = [
+  "sabarimala-heritage",
+  "munnar-nature",
+  "wayanad-wildlife-trail",
+  "alleppey-backwaters",
+];
 
 export function ActiveDashboard({
   name,
@@ -17,70 +25,52 @@ export function ActiveDashboard({
   trips: Trip[];
 }) {
   const counts = getTripCounts(trips);
-  const recent = trips.slice(0, 3);
+  const draftTrip = trips.find((trip) => trip.status === "draft");
+  const recommended = RECOMMENDED_IDS.map(getTemplateById).filter(
+    (template): template is Template => Boolean(template)
+  );
 
   return (
-    <div className="flex flex-col gap-8">
-      <DashboardTopBar name={name} roleLabel="Organizer" />
+    <div className="flex flex-col gap-10">
+      <DashboardHeader name={name} roleLabel="Organizer" />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <PlanTripCard
-            title="Plan a New Trip"
-            description="Start building your next trip — general or pilgrimage."
-          />
-        </div>
-        <div className="lg:col-span-2">
-          <StatsSummary counts={counts} />
-        </div>
-      </div>
+      {draftTrip ? (
+        <WorkspaceHero
+          eyebrow="Continue where you left off"
+          heading={draftTrip.name}
+          description={draftTrip.location}
+          imageUrl={draftTrip.imageUrl}
+          imageAlt={draftTrip.name}
+          tag="Draft"
+          progress={draftTrip.progress}
+          stepLabel={draftTrip.currentStepLabel ?? "Trip setup"}
+          ctaLabel="Continue setup"
+          ctaHref={getTripActionHref(draftTrip)}
+        />
+      ) : (
+        <WorkspaceHero
+          eyebrow="Ready for your next journey?"
+          heading="Start planning your next trip listing."
+          imageUrl="https://images.unsplash.com/photo-1711192702535-eac61a78ecb0?auto=format&fit=crop&w=1600&q=80"
+          imageAlt="Kerala backwaters"
+          ctaLabel="Create New Listing"
+          ctaHref="/trips/new"
+        />
+      )}
 
-      <QuickBookRow />
+      <QuickOverview counts={counts} />
+
+      <ServiceRail />
 
       <PilgrimageBanner />
 
-      <div>
-        <div className="flex items-center justify-between">
-          <h2 className="font-heading text-2xl font-semibold text-navy">
-            Your Trips
-          </h2>
-          <Link
-            href="/trips"
-            className="font-body text-base font-medium text-navy underline"
-          >
-            View All &rarr;
-          </Link>
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {recent.map((trip) => (
-            <TripCard key={trip.id} trip={trip} />
-          ))}
-        </div>
-      </div>
+      <RecommendationRail templates={recommended} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div>
-          <h2 className="font-heading text-2xl font-semibold text-navy">
-            Recommended for You
-          </h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TemplateCard
-              href="/templates/sabarimala-heritage"
-              title="Sabarimala Heritage"
-              description="A guided pilgrimage route with verified stops."
-              priceLabel="₹4,500-6,000/service"
-            />
-            <TemplateCard
-              href="/templates/munnar-nature"
-              title="Munnar Nature Trail"
-              description="Scenic tea-country route for group getaways."
-              priceLabel="₹2,500-3,000/service"
-            />
-          </div>
-        </div>
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <RecentActivity />
-        </div>
+      <ActiveTripRail trips={trips.slice(0, 6)} />
+
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[3fr_2fr]">
+        <UpcomingTimeline trips={trips} />
+        <RecentActivity />
       </div>
     </div>
   );

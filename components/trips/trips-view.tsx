@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { buttonVariants } from "@/components/ui/button";
 import { Trip, TripStatus } from "@/lib/mock-trips";
@@ -17,10 +18,29 @@ const TABS: { value: TripStatus | "all"; label: string }[] = [
   { value: "complete", label: "Complete" },
 ];
 
+// Dashboard quick-status links use these broader buckets ("active" spans
+// submitted+verified, "completed" spans paid+complete) since they mirror
+// getTripCounts rather than a single TripsView tab.
+function matchesQuickFilter(trip: Trip, filter: string) {
+  if (filter === "active") return trip.status === "submitted" || trip.status === "verified";
+  if (filter === "completed") return trip.status === "paid" || trip.status === "complete";
+  return trip.status === filter;
+}
+
 export function TripsView({ trips }: { trips: Trip[] }) {
-  const [tab, setTab] = useState<TripStatus | "all">("all");
+  const searchParams = useSearchParams();
+  const quickFilter = searchParams.get("status");
+  const [tab, setTab] = useState<TripStatus | "all">(
+    quickFilter && TABS.some((t) => t.value === quickFilter)
+      ? (quickFilter as TripStatus)
+      : "all"
+  );
   const filtered =
-    tab === "all" ? trips : trips.filter((trip) => trip.status === tab);
+    tab !== "all"
+      ? trips.filter((trip) => trip.status === tab)
+      : quickFilter === "active" || quickFilter === "completed"
+      ? trips.filter((trip) => matchesQuickFilter(trip, quickFilter))
+      : trips;
 
   return (
     <div className="flex flex-col gap-6">
