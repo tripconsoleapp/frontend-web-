@@ -42,6 +42,35 @@ export interface Template {
   highlights: string[];
   includedServices: string[];
   itinerary: ItineraryDay[];
+  /** Bumped only if this template's own definition changes in a way that
+   *  matters to a listing built from it. A listing records the version it
+   *  was instantiated from and is never silently upgraded when this
+   *  number changes later. Templates without an explicit version are
+   *  treated as version 1. */
+  version?: number;
+  /** The transport this template is designed around — a DEFAULT preference
+   *  seeded into a new listing's Transport Preference step, never a live
+   *  booking. Still fully re-validated against the new listing's actual
+   *  passenger count via the canonical eligibility rule. */
+  defaultTransportPreference?: "private" | "ksrtc";
+  /** Pilgrimage destinations (ids into PILGRIMAGE_DESTINATIONS) this
+   *  template's route is built around, in visit order — the real route a
+   *  listing instantiated from this template starts with. Only set for
+   *  pilgrimage templates. */
+  defaultDestinationIds?: string[];
+  /** Where this template's route begins (an id into KERALA_LOCATIONS) —
+   *  part of the blueprint, not something the organizer has to pick again
+   *  via the Starting Location workflow before it shows up anywhere. */
+  defaultStartLocationId?: string;
+  /** A recommended stay/restaurant this template is built around (ids into
+   *  the shared hotel/restaurant catalogs) — shown on Template Review as
+   *  the template's suggested configuration. This is informational only:
+   *  it is never written into the new listing's `services.hotel`/
+   *  `restaurant` state as a real selection, since nothing has actually
+   *  been booked — the organizer still goes through the real Hotel/Meals
+   *  workflow to configure and confirm one. */
+  defaultHotelId?: string;
+  defaultRestaurantId?: string;
 }
 
 export const DESTINATION_TYPE_LABELS: Record<DestinationType, string> = {
@@ -148,6 +177,12 @@ export const MOCK_TEMPLATES: Template[] = [
       "Priority queue coordination on request",
     ],
     includedServices: ["Transport", "Meals", "Stay", "Support", "First Aid"],
+    version: 1,
+    defaultTransportPreference: "private",
+    defaultDestinationIds: ["erumeli", "sabarimala"],
+    defaultStartLocationId: "kochi",
+    defaultHotelId: "sannidhanam-pilgrim-lodge",
+    defaultRestaurantId: "sannidhanam-annadanam-sabarimala",
     itinerary: [
       {
         day: 1,
@@ -196,6 +231,11 @@ export const MOCK_TEMPLATES: Template[] = [
       "Emergency medical support on call",
     ],
     includedServices: ["Transport", "Meals", "Support", "First Aid"],
+    version: 1,
+    defaultTransportPreference: "private",
+    defaultDestinationIds: ["erumeli", "sabarimala"],
+    defaultStartLocationId: "kochi",
+    defaultRestaurantId: "pamba-riverside-canteen",
     itinerary: [
       {
         day: 1,
@@ -244,6 +284,12 @@ export const MOCK_TEMPLATES: Template[] = [
       "Local guide familiar with temple customs",
     ],
     includedServices: ["Transport", "Meals", "Stay", "Guide"],
+    version: 1,
+    defaultTransportPreference: "private",
+    defaultDestinationIds: ["guruvayur"],
+    defaultStartLocationId: "kochi",
+    defaultHotelId: "guruvayur-heritage-stay",
+    defaultRestaurantId: "guruvayur-annapoorna-bhavan",
     itinerary: [
       {
         day: 1,

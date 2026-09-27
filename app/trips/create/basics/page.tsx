@@ -5,14 +5,24 @@ import { getTemplateById } from "@/lib/mock-templates";
 export default async function TripBasicsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ template?: string; participants?: string }>;
+  searchParams: Promise<{
+    template?: string;
+    participants?: string;
+    mode?: string;
+    entry?: string;
+  }>;
 }) {
-  const { template: templateId, participants } = await searchParams;
+  const { template: templateId, participants, mode, entry } = await searchParams;
   const template = templateId ? getTemplateById(templateId) : undefined;
 
   return (
     <AppShell>
-      <TripBasicsForm template={template} participants={participants} />
+      <TripBasicsForm
+        template={template}
+        participants={participants}
+        initialMode={mode === "pilgrimage" ? "pilgrimage" : undefined}
+        initialEntry={entry === "scheduled" ? "scheduled" : undefined}
+      />
     </AppShell>
   );
 }

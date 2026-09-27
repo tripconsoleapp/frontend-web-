@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion, type Variants } from "motion/react";
@@ -18,6 +18,7 @@ import {
   saveServicesDraft,
 } from "@/lib/listing-draft";
 import { useTripContext } from "@/lib/use-trip-context";
+import { isKsrtcEligible } from "@/lib/transport-eligibility";
 import { TransportContextHeader } from "./transport-context-header";
 
 type SortKey = "best" | "price" | "rating";
@@ -39,7 +40,7 @@ export function VehicleResults({
 }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
-  const { passengerCount, ready } = useTripContext();
+  const { passengerCount, isIndividual, ready } = useTripContext();
   const [sortBy, setSortBy] = useState<SortKey>("best");
   const [capacityFilter, setCapacityFilter] = useState<number | "any">("any");
 
@@ -49,6 +50,17 @@ export function VehicleResults({
     source === "ksrtc"
       ? `/trips/create/services/vehicle${template ? `?template=${template}` : ""}`
       : `/trips/create/services/vehicle/type?source=private${query}`;
+
+  // The organizer should never land inside the KSRTC flow (direct link,
+  // back button, stale bookmark) once the group no longer qualifies —
+  // bounce back to the source picker, which itself won't offer KSRTC.
+  const ksrtcBlocked = source === "ksrtc" && ready && !isKsrtcEligible(passengerCount, isIndividual);
+
+  useEffect(() => {
+    if (ksrtcBlocked) {
+      router.replace(backHref);
+    }
+  }, [ksrtcBlocked, backHref, router]);
 
   const baseListings = useMemo(
     () =>
@@ -116,6 +128,10 @@ export function VehicleResults({
         hidden: { opacity: 0, y: 12 },
         show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
       };
+
+  if (source === "ksrtc" && (!ready || ksrtcBlocked)) {
+    return <div className="h-64" />;
+  }
 
   return (
     <div className="flex flex-col gap-6 pb-28">

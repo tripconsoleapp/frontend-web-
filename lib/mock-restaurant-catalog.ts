@@ -141,6 +141,46 @@ function multiCuisineMenu(): MenuCategory[] {
   ];
 }
 
+/** Pure-vegetarian menu for temple-town restaurants near pilgrimage
+ *  destinations, where non-veg food is traditionally not served —
+ *  reuses the same veg items already defined in `southIndianMenu()`
+ *  rather than inventing new ones. */
+function templeTownVegMenu(): MenuCategory[] {
+  return [
+    {
+      id: "starters",
+      name: "Starters",
+      items: [
+        { id: "vada", name: "Medu Vada (2 pcs)", description: "Crispy lentil fritters with sambar and chutney", price: 70, diet: "veg", imageUrl: IMG.idliThali },
+      ],
+    },
+    {
+      id: "main-course",
+      name: "Main Course",
+      items: [
+        { id: "masala-dosa", name: "Masala Dosa", description: "Crispy dosa with spiced potato masala", price: 100, diet: "veg", popular: true, imageUrl: IMG.dosa },
+        { id: "idli", name: "Idli (2 pcs)", description: "Steamed rice cakes with sambar and chutney", price: 70, diet: "veg", imageUrl: IMG.idliThali },
+        { id: "sadya-thali", name: "Veg Thali", description: "Full vegetarian meal with rice, sambar and sides", price: 150, diet: "veg", popular: true, imageUrl: IMG.southThali },
+      ],
+    },
+    {
+      id: "desserts",
+      name: "Desserts",
+      items: [
+        { id: "payasam", name: "Payasam", description: "Traditional Kerala sweet milk pudding", price: 90, diet: "veg", imageUrl: IMG.dessert },
+      ],
+    },
+    {
+      id: "beverages",
+      name: "Beverages",
+      items: [
+        { id: "filter-coffee", name: "Filter Coffee", description: "South Indian filter coffee", price: 50, diet: "veg", imageUrl: IMG.mocktail },
+        { id: "fresh-lime", name: "Fresh Lime Soda", description: "Sweet or salted lime soda", price: 60, diet: "vegan", imageUrl: IMG.mocktail },
+      ],
+    },
+  ];
+}
+
 export const RESTAURANTS: Restaurant[] = [
   // ---------- Munnar ----------
   {
@@ -340,6 +380,155 @@ export const RESTAURANTS: Restaurant[] = [
     heroImage: IMG.southIndianInterior,
     galleryImages: [IMG.southThali, IMG.biryani],
     menu: southIndianMenu(),
+  },
+
+  // ---------- Sabarimala ----------
+  // NOTE: mock/demo entries only — not real establishments. Pamba is the
+  // base camp for the Sabarimala trek referenced in the pilgrimage
+  // templates' itineraries but isn't a separately selectable destination
+  // in this app's destination model, so pilgrim-facing catering for the
+  // Pamba base camp is tagged under "sabarimala", the actual destination
+  // id the organizer selects.
+  {
+    id: "sannidhanam-annadanam-sabarimala",
+    destinationId: "sabarimala",
+    name: "Sannidhanam Annadanam Hall (Demo)",
+    cuisine: "Kerala · Vegetarian",
+    dietType: "veg",
+    priceTier: "₹",
+    rating: 4.2,
+    reviewCount: 210,
+    capacity: 120,
+    locationLabel: "Sabarimala · Near Sannidhanam",
+    distanceFromCenterKm: 0.3,
+    amenities: ["Group Seating", "Large Groups"],
+    mealTypes: ["breakfast", "lunch", "dinner"],
+    description: "Demo catalog entry — simple vegetarian catering for large pilgrim groups near the Sannidhanam.",
+    heroImage: IMG.southIndianInterior,
+    galleryImages: [IMG.southThali],
+    menu: templeTownVegMenu(),
+  },
+  {
+    id: "pamba-riverside-canteen",
+    destinationId: "sabarimala",
+    name: "Pamba Riverside Canteen (Demo)",
+    cuisine: "Kerala · Vegetarian",
+    dietType: "veg",
+    priceTier: "₹",
+    rating: 4.0,
+    reviewCount: 96,
+    capacity: 80,
+    locationLabel: "Pamba base camp",
+    distanceFromCenterKm: 4.5,
+    amenities: ["Group Seating"],
+    mealTypes: ["breakfast", "lunch", "dinner"],
+    description: "Demo catalog entry — basic vegetarian meals for groups pausing at the Pamba base camp before the trek.",
+    heroImage: IMG.cozyInterior,
+    galleryImages: [],
+    menu: templeTownVegMenu(),
+  },
+
+  // ---------- Guruvayur ----------
+  {
+    id: "guruvayur-annapoorna-bhavan",
+    destinationId: "guruvayur",
+    name: "Annapoorna Bhavan (Demo)",
+    cuisine: "Kerala · South Indian Vegetarian",
+    dietType: "veg",
+    priceTier: "₹",
+    rating: 4.4,
+    reviewCount: 312,
+    capacity: 90,
+    locationLabel: "Guruvayur · 0.5 km from temple",
+    distanceFromCenterKm: 0.5,
+    amenities: ["AC", "Group Seating", "Family Seating"],
+    mealTypes: ["breakfast", "lunch", "dinner"],
+    description: "Demo catalog entry — a temple-town vegetarian restaurant serving traditional Kerala thalis.",
+    heroImage: IMG.southIndianInterior,
+    galleryImages: [IMG.southThali, IMG.idliThali],
+    menu: templeTownVegMenu(),
+  },
+  {
+    id: "krishna-nivas-dining-guruvayur",
+    destinationId: "guruvayur",
+    name: "Krishna Nivas Dining Hall (Demo)",
+    cuisine: "Kerala · Vegetarian",
+    dietType: "veg",
+    priceTier: "₹₹",
+    rating: 4.1,
+    reviewCount: 148,
+    capacity: 100,
+    locationLabel: "Guruvayur · 1.2 km from temple",
+    distanceFromCenterKm: 1.2,
+    amenities: ["AC", "Group Seating"],
+    mealTypes: ["lunch", "dinner"],
+    description: "Demo catalog entry — a group-friendly dining hall near the temple with a fixed vegetarian menu.",
+    heroImage: IMG.cozyInterior,
+    galleryImages: [],
+    menu: templeTownVegMenu(),
+  },
+
+  // ---------- Erumeli ----------
+  {
+    id: "erumeli-trailhead-canteen",
+    destinationId: "erumeli",
+    name: "Erumeli Trailhead Canteen (Demo)",
+    cuisine: "Kerala · Vegetarian",
+    dietType: "veg",
+    priceTier: "₹",
+    rating: 4.0,
+    reviewCount: 74,
+    capacity: 70,
+    locationLabel: "Erumeli · Near Vavar Palli",
+    distanceFromCenterKm: 0.8,
+    amenities: ["Group Seating"],
+    mealTypes: ["breakfast", "lunch", "dinner"],
+    description: "Demo catalog entry — simple vegetarian meals for groups starting the traditional route from Erumeli.",
+    heroImage: IMG.southIndianInterior,
+    galleryImages: [],
+    menu: templeTownVegMenu(),
+  },
+
+  // ---------- Chottanikkara ----------
+  {
+    id: "chottanikkara-devi-bhavan",
+    destinationId: "chottanikkara",
+    name: "Devi Bhavan Restaurant (Demo)",
+    cuisine: "Kerala · South Indian Vegetarian",
+    dietType: "veg",
+    priceTier: "₹",
+    rating: 4.2,
+    reviewCount: 133,
+    capacity: 60,
+    locationLabel: "Chottanikkara · 0.4 km from temple",
+    distanceFromCenterKm: 0.4,
+    amenities: ["Group Seating", "Family Seating"],
+    mealTypes: ["breakfast", "lunch", "dinner"],
+    description: "Demo catalog entry — a family-run vegetarian restaurant near the Chottanikkara temple.",
+    heroImage: IMG.southIndianInterior,
+    galleryImages: [IMG.southThali],
+    menu: templeTownVegMenu(),
+  },
+
+  // ---------- Ambalapuzha ----------
+  {
+    id: "ambalapuzha-palpayasam-residency",
+    destinationId: "ambalapuzha",
+    name: "Palpayasam Residency Dining (Demo)",
+    cuisine: "Kerala · Vegetarian",
+    dietType: "veg",
+    priceTier: "₹",
+    rating: 4.3,
+    reviewCount: 167,
+    capacity: 65,
+    locationLabel: "Ambalapuzha · 0.3 km from temple",
+    distanceFromCenterKm: 0.3,
+    amenities: ["Group Seating"],
+    mealTypes: ["breakfast", "lunch", "dinner"],
+    description: "Demo catalog entry — known in-app for its Palpayasam-style dessert, alongside a full vegetarian menu.",
+    heroImage: IMG.cozyInterior,
+    galleryImages: [IMG.dessert],
+    menu: templeTownVegMenu(),
   },
 ];
 

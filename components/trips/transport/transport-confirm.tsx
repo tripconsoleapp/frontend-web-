@@ -7,6 +7,7 @@ import { Check } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
 import {
   VehicleSelectionItem,
+  getReviewReturnHref,
   getServicesDraft,
   saveServicesDraft,
 } from "@/lib/listing-draft";
@@ -43,7 +44,7 @@ export function TransportConfirm({ template }: { template?: string }) {
         pending: [],
       },
     });
-    router.push(servicesHref);
+    router.push(getReviewReturnHref(servicesHref, template));
   }
 
   const item: Variants = shouldReduce

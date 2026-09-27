@@ -14,12 +14,14 @@ import {
   Template,
 } from "@/lib/mock-templates";
 import { ServiceIcon } from "@/components/templates/service-icon";
+import { resolveTemplateRoute } from "@/lib/template-route";
 
 export function TemplateDetailView({ template }: { template: Template }) {
   const [activeDay, setActiveDay] = useState(template.itinerary[0].day);
   const [participants, setParticipants] = useState(
     template.suggestedParticipants
   );
+  const route = resolveTemplateRoute(template);
 
   const activeDayData =
     template.itinerary.find((day) => day.day === activeDay) ??
@@ -106,6 +108,21 @@ export function TemplateDetailView({ template }: { template: Template }) {
         <p className="mt-2 max-w-3xl font-body text-sm leading-relaxed text-text-grey">
           {template.about}
         </p>
+      </section>
+
+      <section>
+        <h2 className="font-heading text-lg font-semibold text-navy">
+          Route
+        </h2>
+        <p className="mt-2 max-w-3xl font-body text-sm leading-relaxed text-navy">
+          {[route.startLocationName, ...route.stops.map((s) => s.name)].join(" → ")}
+        </p>
+        {template.defaultTransportPreference && (
+          <p className="mt-1 font-body text-xs text-text-grey">
+            Transport preference: {template.defaultTransportPreference === "ksrtc" ? "KSRTC" : "Private Operator"}
+            {" "}(re-checked against your actual group size once you use this template)
+          </p>
+        )}
       </section>
 
       <section>

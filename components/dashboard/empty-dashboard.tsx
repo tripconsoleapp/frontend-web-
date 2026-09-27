@@ -1,9 +1,8 @@
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { WorkspaceHero } from "@/components/dashboard/workspace-hero";
-import { QuickOverview } from "@/components/dashboard/quick-overview";
-import { ServiceRail } from "@/components/dashboard/service-rail";
+import { DashboardHero } from "@/components/dashboard/dashboard-hero";
+import { ServiceCollection } from "@/components/dashboard/service-collection";
 import { PilgrimageBanner } from "@/components/dashboard/pilgrimage-banner";
 import { RecommendationRail } from "@/components/dashboard/recommendation-rail";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { Template, getTemplateById } from "@/lib/mock-templates";
 
 const RECOMMENDED_IDS = [
@@ -13,39 +12,26 @@ const RECOMMENDED_IDS = [
   "coorg-adventure",
 ];
 
-const QUICK_STARTS = [
-  { label: "Start from Scratch", href: "/trips/create/loading" },
-  { label: "Use a Template", href: "/templates" },
-  { label: "Plan a Pilgrimage", href: "/pilgrimage" },
-];
-
 export function EmptyDashboard({ name }: { name: string }) {
   const recommended = RECOMMENDED_IDS.map(getTemplateById).filter(
     (template): template is Template => Boolean(template)
   );
 
   return (
-    <div className="flex flex-col gap-10">
-      <DashboardHeader name={name} roleLabel="Organizer" />
+    <div className="flex flex-col gap-14 md:gap-16">
+      <DashboardHero name={name} roleLabel="Organizer" draftTrip={null} counts={{ active: 0, completed: 0, draft: 0 }} />
 
-      <WorkspaceHero
-        eyebrow="Welcome to TripConsole"
-        heading="Start organizing your first journey."
-        description="Create your first professional trip listing."
-        imageUrl="https://images.unsplash.com/photo-1658051161493-1d311c4c7b4d?auto=format&fit=crop&w=1600&q=80"
-        imageAlt="Kerala hills"
-        ctaLabel="Create Your First Listing"
-        ctaHref="/trips/new"
-        quickStarts={QUICK_STARTS}
-      />
+      <ScrollReveal>
+        <ServiceCollection />
+      </ScrollReveal>
 
-      <QuickOverview counts={{ active: 0, completed: 0, draft: 0 }} />
+      <ScrollReveal>
+        <PilgrimageBanner />
+      </ScrollReveal>
 
-      <ServiceRail />
-
-      <PilgrimageBanner />
-
-      <RecommendationRail templates={recommended} />
+      <ScrollReveal>
+        <RecommendationRail templates={recommended} />
+      </ScrollReveal>
     </div>
   );
 }

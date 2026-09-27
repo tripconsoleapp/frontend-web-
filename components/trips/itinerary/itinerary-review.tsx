@@ -7,7 +7,7 @@ import { AlertTriangle, ArrowRight, Check, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/mock-trips";
 import { useTripContext } from "@/lib/use-trip-context";
-import { ItineraryDraft, getItineraryDraft, getServicesDraft, saveItineraryDraft } from "@/lib/listing-draft";
+import { ItineraryDraft, getItineraryDraft, getReviewReturnHref, getServicesDraft, saveItineraryDraft } from "@/lib/listing-draft";
 import { itineraryHasBlockingErrors, itineraryTotalCost } from "@/lib/itinerary";
 import { ItineraryContextHeader, TravelerSummary } from "./itinerary-context-header";
 
@@ -71,8 +71,12 @@ export function ItineraryReview({ template }: { template?: string }) {
         <p className="font-body text-sm text-text-grey">
           Status: <span className="font-semibold text-navy">{itinerary.status === "ready" ? "Ready" : "Draft"}</span>
         </p>
-        <button type="button" onClick={() => router.push(`/trips/create/services${templateQuery}`)} className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-navy px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-navy/90">
-          Continue to Final Review &rarr;
+        <button
+          type="button"
+          onClick={() => router.push(getReviewReturnHref("/trips/create/review", template))}
+          className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-navy px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-navy/90"
+        >
+          Continue &rarr;
         </button>
       </div>
     );

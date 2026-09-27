@@ -12,6 +12,9 @@ import { formatDateRange } from "./mock-trips";
 export interface TripContext {
   tripName: string;
   passengerCount: number;
+  /** True only for the "individual" trip type — KSRTC is never offered
+   *  regardless of passenger count in that case, since it's always 1. */
+  isIndividual: boolean;
   participantBreakdown: ParticipantBreakdownEntry[];
   startDate: string;
   endDate: string;
@@ -31,6 +34,7 @@ export interface TripContext {
 const EMPTY: TripContext = {
   tripName: "",
   passengerCount: 0,
+  isIndividual: false,
   participantBreakdown: [],
   startDate: "",
   endDate: "",
@@ -53,6 +57,7 @@ export function useTripContext(): TripContext {
     setContext({
       tripName: basics?.tripName ?? "",
       passengerCount: basics?.participantCount ?? 0,
+      isIndividual: basics?.tripType === "individual",
       participantBreakdown: basics?.participantBreakdown ?? [],
       startDate: basics?.startDate ?? "",
       endDate: basics?.endDate ?? "",

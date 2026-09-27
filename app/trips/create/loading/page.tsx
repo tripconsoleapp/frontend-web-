@@ -4,14 +4,21 @@ import { getTemplateById } from "@/lib/mock-templates";
 export default async function TripSetupLoadingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ template?: string; participants?: string }>;
+  searchParams: Promise<{
+    template?: string;
+    participants?: string;
+    mode?: string;
+    entry?: string;
+  }>;
 }) {
-  const { template: templateId, participants } = await searchParams;
+  const { template: templateId, participants, mode, entry } = await searchParams;
   const template = templateId ? getTemplateById(templateId) : undefined;
 
   const nextParams = new URLSearchParams();
   if (templateId) nextParams.set("template", templateId);
   if (participants) nextParams.set("participants", participants);
+  if (mode) nextParams.set("mode", mode);
+  if (entry) nextParams.set("entry", entry);
   const query = nextParams.toString();
 
   return (

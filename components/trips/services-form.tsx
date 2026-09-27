@@ -25,12 +25,17 @@ import {
   DestinationStay,
   MealInstance,
   ServicesDraft,
+  getReviewReturnHref,
   getServicesDraft,
+  getTripMode,
   saveServicesDraft,
 } from "@/lib/listing-draft";
 import { hotelServiceCost, staySummaryCounts } from "@/lib/hotel-stays";
 import { mealCounts, mealPlanTotal } from "@/lib/meal-plan";
 import { activityCounts, planTotal } from "@/lib/activity-plan";
+import { useTripContext } from "@/lib/use-trip-context";
+import { useTripMode } from "@/lib/use-trip-mode";
+import { isKsrtcEligible } from "@/lib/transport-eligibility";
 
 const ICONS: Record<ServiceId, typeof Car> = {
   vehicle: Car,
@@ -42,15 +47,19 @@ const ICONS: Record<ServiceId, typeof Car> = {
 export function ServicesForm({ template }: { template?: string }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
+  const { passengerCount, isIndividual, ready: tripReady } = useTripContext();
+  const { mode } = useTripMode();
 
   const [services, setServices] = useState<ServicesDraft>(DEFAULT_SERVICES_DRAFT);
   const [hydrated, setHydrated] = useState(false);
+  const [reviewReturnActive, setReviewReturnActive] = useState(false);
 
   // sessionStorage isn't available during SSR, so the first render must match
   // the server's default-only output. Load the real persisted draft only
   // after mount, then start persisting changes from that point on.
   useEffect(() => {
     setServices(getServicesDraft());
+    setReviewReturnActive(getTripMode().reviewReturnActive ?? false);
     setHydrated(true);
   }, []);
 
@@ -76,7 +85,20 @@ export function ServicesForm({ template }: { template?: string }) {
     (id) => services[id].enabled && !services[id].configured
   );
   const incompleteTitles = incompleteSingle.map((id) => SERVICE_META.find((s) => s.id === id)!.title);
-  const hasIncomplete = incompleteTitles.length > 0;
+
+  // If the group shrank below the KSRTC threshold after a KSRTC vehicle
+  // was already confirmed, that selection is now invalid — never leave
+  // it silently active. Only evaluate once trip context has hydrated so
+  // this doesn't false-positive on the very first render.
+  const hasInvalidKsrtcSelection =
+    tripReady && !isKsrtcEligible(passengerCount, isIndividual) && services.vehicle.vehicles.some((v) => v.source === "ksrtc");
+
+  const hasIncomplete = incompleteTitles.length > 0 || hasInvalidKsrtcSelection;
+
+  // Pilgrimage trips don't offer Activities as a service at all — not
+  // just "off by default" but not shown as a choice in the first place.
+  const visibleServiceMeta =
+    mode === "pilgrimage" ? SERVICE_META.filter((meta) => meta.id !== "activities") : SERVICE_META;
 
   function toggleEnabled(id: ServiceId) {
     setServices((current) => {
@@ -114,6 +136,10 @@ export function ServicesForm({ template }: { template?: string }) {
   }
 
   function handleNext() {
+    if (reviewReturnActive) {
+      router.push(getReviewReturnHref("/trips/create/itinerary", template));
+      return;
+    }
     if (hasIncomplete) return;
     router.push("/trips/create/itinerary");
   }
@@ -164,7 +190,7 @@ export function ServicesForm({ template }: { template?: string }) {
           animate="show"
           className="flex flex-col gap-4"
         >
-          {SERVICE_META.map((meta) => {
+          {visibleServiceMeta.map((meta) => {
             const Icon = ICONS[meta.id];
             const isEnabled = services[meta.id].enabled;
             const isActivities = meta.id === "activities";
@@ -235,7 +261,13 @@ export function ServicesForm({ template }: { template?: string }) {
                       >
                         {isVehicle && (
                           <>
-                            {isConfigured && services.vehicle.vehicles.length > 0 ? (
+                            {hasInvalidKsrtcSelection ? (
+                              <InvalidSelectionRow
+                                message="Your KSRTC selection is no longer available for this group size."
+                                label="Change Vehicle"
+                                href={selectionHref}
+                              />
+                            ) : isConfigured && services.vehicle.vehicles.length > 0 ? (
                               <SelectedServiceRow
                                 name={vehicleSummaryName(services.vehicle.vehicles)}
                                 subtitle={vehicleSummarySubtitle(services.vehicle.vehicles)}
@@ -316,7 +348,7 @@ export function ServicesForm({ template }: { template?: string }) {
               <CostLine label="Vehicle" value={vehicleCost} />
               <CostLine label="Hotel" value={hotelCost} />
               <CostLine label="Dining" value={restaurantCost} />
-              <CostLine label="Activities" value={activitiesCost} />
+              {mode !== "pilgrimage" && <CostLine label="Activities" value={activitiesCost} />}
             </div>
             <div className="mt-3 flex items-center justify-between border-t border-navy/10 pt-3">
               <span className="font-body text-sm font-semibold text-navy">
@@ -336,7 +368,16 @@ export function ServicesForm({ template }: { template?: string }) {
               </AnimatePresence>
             </div>
 
-            {hasIncomplete && (
+            {hasInvalidKsrtcSelection && (
+              <div className="mt-4 flex items-start gap-2 rounded-xl bg-destructive-soft px-3 py-2.5">
+                <AlertCircle size={15} className="mt-0.5 shrink-0 text-destructive" />
+                <p className="font-body text-xs text-destructive">
+                  Vehicle selection needs attention — the confirmed KSRTC option no longer fits this group size.
+                </p>
+              </div>
+            )}
+
+            {incompleteTitles.length > 0 && (
               <div className="mt-4 flex items-start gap-2 rounded-xl bg-orange/10 px-3 py-2.5">
                 <AlertCircle size={15} className="mt-0.5 shrink-0 text-orange" />
                 <p className="font-body text-xs text-orange">
@@ -354,24 +395,24 @@ export function ServicesForm({ template }: { template?: string }) {
           Back
         </Link>
         <div className="flex items-center gap-3">
-          {hasIncomplete && (
+          {!reviewReturnActive && hasIncomplete && (
             <span className="hidden font-body text-xs text-orange sm:inline">
               Complete required selections to continue
             </span>
           )}
           <motion.button
             type="button"
-            whileHover={hasIncomplete ? undefined : { y: -1 }}
-            whileTap={hasIncomplete ? undefined : { scale: 0.98 }}
+            whileHover={!reviewReturnActive && hasIncomplete ? undefined : { y: -1 }}
+            whileTap={!reviewReturnActive && hasIncomplete ? undefined : { scale: 0.98 }}
             onClick={handleNext}
-            disabled={hasIncomplete}
+            disabled={!reviewReturnActive && hasIncomplete}
             className={buttonVariants({
               variant: "accent",
               size: "lg",
               className: "disabled:cursor-not-allowed disabled:opacity-40",
             })}
           >
-            Next: Itinerary &rarr;
+            {reviewReturnActive ? "Return to Template Review" : "Next: Itinerary"} &rarr;
           </motion.button>
         </div>
       </div>
@@ -386,6 +427,22 @@ function CostLine({ label, value }: { label: string; value: number }) {
       <span className={cn("font-medium", value === 0 && "text-text-grey/60")}>
         {value > 0 ? formatCurrency(value) : "—"}
       </span>
+    </div>
+  );
+}
+
+function InvalidSelectionRow({ message, label, href }: { message: string; label: string; href: string }) {
+  return (
+    <div className="flex flex-col gap-2 rounded-xl bg-destructive-soft px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <span className="flex items-start gap-1.5 font-body text-sm font-medium text-destructive">
+        <AlertCircle size={14} className="mt-0.5 shrink-0" /> {message}
+      </span>
+      <Link
+        href={href}
+        className="shrink-0 font-body text-sm font-semibold text-navy underline underline-offset-2 transition-colors hover:text-destructive"
+      >
+        {label} &rarr;
+      </Link>
     </div>
   );
 }

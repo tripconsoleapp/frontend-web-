@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, Reorder, useReducedMotion, type Variants } from "motion/react";
 import {
   ArrowLeft,
   CalendarDays,
+  Check,
   Compass,
   MapPinned,
   Navigation,
@@ -14,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
 import { CreateStepper } from "@/components/trips/create-stepper";
 import { RouteMap } from "@/components/trips/route-map";
 import { AddDestinationDrawer } from "@/components/trips/add-destination-drawer";
@@ -30,17 +33,10 @@ import {
   formatDuration,
   getKeralaLocation,
 } from "@/lib/kerala-locations";
-import { saveDestinationsSummary } from "@/lib/listing-draft";
-
-function templateStop(id: string, nights: number): DestinationStop {
-  const location = getKeralaLocation(id)!;
-  return { ...location, nights, overnight: true };
-}
-
-const TEMPLATE_PREFILL: DestinationStop[] = [
-  templateStop("munnar", 2),
-  templateStop("thekkady", 2),
-];
+import { PILGRIMAGE_DESTINATIONS } from "@/lib/pilgrimage-destinations";
+import { getReviewReturnHref, saveDestinationsSummary } from "@/lib/listing-draft";
+import { useTripMode } from "@/lib/use-trip-mode";
+import { resolveTemplateRouteById } from "@/lib/template-route";
 
 function MetricValue({ value }: { value: string }) {
   return (
@@ -72,6 +68,7 @@ export function DestinationsFlow({
 }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
+  const { mode } = useTripMode();
 
   const start = startId ? getKeralaLocation(startId) : undefined;
   const startLocation: KeralaLocation = start ?? {
@@ -86,7 +83,7 @@ export function DestinationsFlow({
 
   const fromTemplate = Boolean(templateId);
   const [destinations, setDestinations] = useState<DestinationStop[]>(
-    fromTemplate ? TEMPLATE_PREFILL : []
+    fromTemplate ? (resolveTemplateRouteById(templateId)?.stops ?? []) : []
   );
   const [bannerVisible, setBannerVisible] = useState(fromTemplate);
   const [modalOpen, setModalOpen] = useState(false);
@@ -172,6 +169,32 @@ export function DestinationsFlow({
     setSelectedId((current) => (current === id ? null : current));
   }
 
+  // Curated shrine chips add/remove straight from the same `destinations`
+  // state a custom stop would — order of selection is preserved, and a
+  // shrine already on the route (added via chip or custom search) can be
+  // removed again from either place.
+  function toggleShrine(id: string) {
+    setDestinations((current) => {
+      if (current.some((d) => d.id === id)) {
+        return current.filter((d) => d.id !== id);
+      }
+      const shrine = PILGRIMAGE_DESTINATIONS.find((d) => d.id === id);
+      if (!shrine || shrine.id === startLocation.id) return current;
+      const stop: DestinationStop = {
+        id: shrine.id,
+        name: shrine.name,
+        district: shrine.district,
+        x: shrine.x,
+        y: shrine.y,
+        lat: shrine.lat,
+        lng: shrine.lng,
+        nights: 1,
+        overnight: true,
+      };
+      return [...current, stop];
+    });
+  }
+
   function handleMoveUp(id: string) {
     setDestinations((current) => {
       const index = current.findIndex((d) => d.id === id);
@@ -203,7 +226,7 @@ export function DestinationsFlow({
   function handleNext() {
     const params = new URLSearchParams();
     if (templateId) params.set("template", templateId);
-    router.push(`/trips/create/services?${params.toString()}`);
+    router.push(getReviewReturnHref(`/trips/create/services?${params.toString()}`, templateId));
   }
 
   const modalPreviousStop =
@@ -330,6 +353,55 @@ export function DestinationsFlow({
                 </span>
               </div>
             </div>
+
+            {mode === "pilgrimage" && (
+              <div className="shrink-0">
+                <p className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">
+                  Sacred Destinations
+                </p>
+                <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
+                  {PILGRIMAGE_DESTINATIONS.map((shrine) => {
+                    const active = destinations.some((d) => d.id === shrine.id);
+                    return (
+                      <button
+                        key={shrine.id}
+                        type="button"
+                        onClick={() => toggleShrine(shrine.id)}
+                        aria-pressed={active}
+                        className="group relative w-28 shrink-0 overflow-hidden rounded-xl text-left"
+                      >
+                        <div className="relative h-20 w-full overflow-hidden">
+                          <Image
+                            src={shrine.imageUrl}
+                            alt={shrine.name}
+                            fill
+                            sizes="112px"
+                            className={cn(
+                              "object-cover transition-all duration-300",
+                              !active && "opacity-90 group-hover:opacity-100"
+                            )}
+                          />
+                          <div
+                            className={cn(
+                              "absolute inset-0 transition-colors",
+                              active ? "bg-navy/20 ring-2 ring-inset ring-orange" : "bg-navy/10"
+                            )}
+                          />
+                          {active && (
+                            <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-orange text-white">
+                              <Check size={11} strokeWidth={3} />
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1.5 line-clamp-2 font-body text-xs font-medium leading-snug text-navy">
+                          {shrine.name}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <p className="shrink-0 font-heading text-base font-semibold text-navy">
               Itinerary Stops

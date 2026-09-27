@@ -7,6 +7,8 @@ import { Check, ShieldCheck, Truck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { buttonVariants } from "@/components/ui/button";
 import { getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { useTripContext } from "@/lib/use-trip-context";
+import { isKsrtcEligible } from "@/lib/transport-eligibility";
 import { TransportContextHeader } from "./transport-context-header";
 
 type Source = "private" | "ksrtc";
@@ -34,7 +36,15 @@ const SOURCES: {
 export function TransportSource({ template }: { template?: string }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
+  const { passengerCount, isIndividual, ready } = useTripContext();
   const [selected, setSelected] = useState<Source | null>(null);
+
+  // KSRTC is only ever offered once the group meets the configured
+  // threshold — the organizer never sees it as a selectable option
+  // otherwise, so there's nothing to discover is unavailable later.
+  const availableSources = ready && !isKsrtcEligible(passengerCount, isIndividual)
+    ? SOURCES.filter((s) => s.id !== "ksrtc")
+    : SOURCES;
 
   // Entering the transport flow fresh always starts a new selection attempt.
   // The previously confirmed plan (`vehicle.vehicles`) is untouched — only
@@ -48,6 +58,26 @@ export function TransportSource({ template }: { template?: string }) {
       });
     }
   }, []);
+
+  // A preference recorded earlier (e.g. the pilgrimage Transport
+  // Preference step) is pre-selected here rather than asking again —
+  // still just a starting point, the organizer can change it. If Trip
+  // Basics changed since then and KSRTC is no longer eligible, the stale
+  // preference is corrected back to Private rather than left sitting in
+  // the draft — nothing here has offered KSRTC to see, so there's no
+  // "selection" to preserve, only a hint that no longer applies.
+  useEffect(() => {
+    if (!ready) return;
+    const draft = getServicesDraft();
+    const preferred = draft.vehicle.lastSource;
+    if (!preferred) return;
+    if (preferred === "ksrtc" && !isKsrtcEligible(passengerCount, isIndividual)) {
+      saveServicesDraft({ ...draft, vehicle: { ...draft.vehicle, lastSource: "private" } });
+      return;
+    }
+    setSelected(preferred);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
 
   const query = template ? `&template=${template}` : "";
   const backHref = `/trips/create/services${template ? `?template=${template}` : ""}`;
@@ -92,9 +122,9 @@ export function TransportSource({ template }: { template?: string }) {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+        className={cn("grid grid-cols-1 gap-4", availableSources.length > 1 && "sm:grid-cols-2")}
       >
-        {SOURCES.map((source) => {
+        {availableSources.map((source) => {
           const Icon = source.icon;
           const isSelected = selected === source.id;
           return (

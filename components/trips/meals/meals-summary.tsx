@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import { ArrowRight, Check, Minus } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
-import { MealInstance, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { MealInstance, getReviewReturnHref, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
 import { MEAL_LABELS, MEAL_TYPES, mealCounts, mealKey, mealPlanTotal } from "@/lib/meal-plan";
 import { MealContextHeader } from "./meal-context-header";
 
@@ -36,7 +36,7 @@ export function MealsSummary({ template }: { template?: string }) {
   function handleContinue() {
     const draft = getServicesDraft();
     saveServicesDraft({ ...draft, restaurant: { ...draft.restaurant, configured: true } });
-    router.push(`/trips/create/services${templateQuery}`);
+    router.push(getReviewReturnHref(`/trips/create/services${templateQuery}`, template));
   }
 
   const container: Variants = { hidden: {}, show: { transition: { staggerChildren: shouldReduce ? 0 : 0.06 } } };

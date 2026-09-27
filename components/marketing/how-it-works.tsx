@@ -1,46 +1,39 @@
-import { Activity, Compass, Ticket } from "lucide-react";
-
 const STEPS = [
   {
-    icon: Compass,
+    number: "01",
     label: "Plan",
     description: "Map out itineraries, stops, and budgets in minutes.",
   },
   {
-    icon: Ticket,
+    number: "02",
     label: "Book",
-    description: "Reserve tickets and stays without leaving the console.",
+    description: "Reserve transport, stays, meals, and activities without leaving the console.",
   },
   {
-    icon: Activity,
+    number: "03",
     label: "Track",
-    description: "Follow costs and updates in real time, together.",
+    description: "Follow costs, passengers, and approvals in real time, together.",
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="bg-white px-6 py-24 sm:px-8">
-      <div className="mx-auto max-w-5xl">
-        <h2 className="text-center text-[clamp(1.8rem,3.1vw,2.8rem)] font-heading font-semibold leading-[1.02] text-navy">
-          How it works
-        </h2>
+    <section id="how-it-works" className="bg-white px-6 py-24 sm:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="max-w-xl">
+          <p className="font-body text-sm font-semibold uppercase tracking-[0.2em] text-orange">Process</p>
+          <h2 className="mt-2 text-[clamp(1.8rem,3.1vw,2.8rem)] font-heading font-bold leading-[1.02] text-navy">
+            How it works
+          </h2>
+        </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-10 sm:grid-cols-3">
-          {STEPS.map(({ icon: Icon, label, description }) => (
-            <div
-              key={label}
-              className="flex flex-col items-center gap-3 text-center"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-navy/10 text-navy">
-                <Icon size={22} />
-              </span>
-              <h3 className="font-heading font-semibold text-navy">
-                {label}
-              </h3>
-              <p className="font-body text-base text-text-grey">
-                {description}
-              </p>
+        <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-3">
+          {STEPS.map(({ number, label, description }) => (
+            <div key={label} className="relative border-t-2 border-navy/10 pt-6">
+              <span className="absolute -top-px left-0 h-0.5 w-10 bg-orange" aria-hidden="true" />
+              <span className="font-heading text-sm font-semibold text-text-grey">{number}</span>
+              <h3 className="mt-3 font-heading text-xl font-bold text-navy">{label}</h3>
+              <p className="mt-2 max-w-xs font-body text-base text-text-grey">{description}</p>
             </div>
           ))}
         </div>

@@ -20,7 +20,10 @@ import { CreateStepper } from "@/components/trips/create-stepper";
 import { TripTypeCard } from "@/components/trips/trip-type-card";
 import { TripSummaryPanel } from "@/components/trips/trip-summary-panel";
 import { Template } from "@/lib/mock-templates";
-import { saveBasicsSummary } from "@/lib/listing-draft";
+import { getBasicsSummary, getReviewReturnHref, getTripMode, saveBasicsSummary, saveTripMode, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { instantiateFromTemplate } from "@/lib/template-instantiate";
+import { ksrtcEligibilityReason } from "@/lib/transport-eligibility";
+import { KsrtcEligibilityNote } from "@/components/trips/transport/ksrtc-eligibility-note";
 
 type TripType = "school" | "college" | "group" | "individual";
 
@@ -105,12 +108,74 @@ const fieldMotion = {
 export function TripBasicsForm({
   template,
   participants,
+  initialMode,
+  initialEntry,
 }: {
   template?: Template;
   participants?: string;
+  initialMode?: "pilgrimage";
+  initialEntry?: "scheduled";
 }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
+
+  // Pilgrimage is a mode of the same trip model, not a separate flow —
+  // resolved once (URL param for a fresh "scratch"/"scheduled" start, the
+  // template's own group type, or a mode already saved from an earlier
+  // visit to this page in the same draft) and then persisted so every
+  // downstream step can read it without needing its own query param.
+  const [tripMode, setTripMode] = useState<"standard" | "pilgrimage">("standard");
+  // "Use a Template" never shows this form for a fresh instantiation — the
+  // organizer already saw everything the template provides on the Template
+  // Preview page, so this would only ask them to redo it. Set once a fresh
+  // instantiation redirects away; a revisit via "Edit Trip Details" (the
+  // template was already instantiated earlier) leaves this false and the
+  // form renders normally, hydrated from the existing draft.
+  const [redirectingToReview, setRedirectingToReview] = useState(false);
+  useEffect(() => {
+    if (template) {
+      // Instantiates a fresh, independent listing from this template (new
+      // trip record, services reset to the template's real included
+      // services, route seeded, itinerary cleared) — a no-op if this
+      // listing was already instantiated from this same template on an
+      // earlier visit, so revisiting Basics never wipes out customization
+      // made since.
+      const freshlyInstantiated = instantiateFromTemplate(template, initialEntry);
+      if (freshlyInstantiated) {
+        setRedirectingToReview(true);
+        router.replace(`/trips/create/template-review?template=${template.id}`);
+        return;
+      }
+    } else {
+      const existing = getTripMode();
+      const resolvedMode: "standard" | "pilgrimage" =
+        existing.mode === "pilgrimage" || initialMode === "pilgrimage" ? "pilgrimage" : "standard";
+      const resolvedEntry = existing.entryMethod ?? (
+        initialEntry === "scheduled" ? "scheduled" : resolvedMode === "pilgrimage" ? "scratch" : null
+      );
+      saveTripMode({
+        mode: resolvedMode,
+        entryMethod: resolvedEntry,
+        sourceTemplateId: existing.sourceTemplateId ?? null,
+        sourceTemplateVersion: existing.sourceTemplateVersion ?? null,
+      });
+
+      // A pilgrimage trip never offers Activities — guard against a stale
+      // `enabled: true` left over from an earlier standard-mode draft in
+      // the same browser tab (the services slice isn't scoped per trip).
+      if (resolvedMode === "pilgrimage") {
+        const services = getServicesDraft();
+        if (services.activities.enabled) {
+          saveServicesDraft({
+            ...services,
+            activities: { enabled: false, configured: false, destinations: [] },
+          });
+        }
+      }
+    }
+    setTripMode(getTripMode().mode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [tripName, setTripName] = useState(template?.name ?? "");
   const [tripType, setTripType] = useState<TripType>(
@@ -135,6 +200,42 @@ export function TripBasicsForm({
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [budget, setBudget] = useState("");
 
+  // The persisted listingDraft is the one source of truth for these
+  // fields — a fresh instantiation (no existing basics yet) keeps the
+  // template/URL-derived defaults above, but a revisit (refresh, or
+  // navigating back from a later step) must show what was actually saved,
+  // not silently fall back to those defaults again. This never re-runs
+  // `instantiateFromTemplate` and never introduces a second store for
+  // participant count — it only re-displays what's already in the draft.
+  //
+  // `basicsHydrated` gates the sync-to-draft effect below: without it, that
+  // effect fires in the same initial mount flush as this one, before these
+  // setState calls have committed, and would write the pre-hydration
+  // defaults (e.g. the template's original count) straight back over the
+  // value just read here.
+  const [basicsHydrated, setBasicsHydrated] = useState(false);
+  useEffect(() => {
+    const existing = getBasicsSummary();
+    if (!existing) {
+      setBasicsHydrated(true);
+      return;
+    }
+    if (existing.tripName && existing.tripName !== "Untitled Trip") setTripName(existing.tripName);
+    if (existing.tripType) setTripType(existing.tripType);
+    if (existing.startDate) setStartDate(existing.startDate);
+    if (existing.endDate) setEndDate(existing.endDate);
+    if (existing.tripType === "school" || existing.tripType === "college") {
+      const studentsEntry = existing.participantBreakdown?.find((e) => e.label === "Students");
+      const staffEntry = existing.participantBreakdown?.find((e) => e.label === "Staff");
+      if (studentsEntry) setStudents(studentsEntry.count);
+      if (staffEntry) setStaff(staffEntry.count);
+    } else if (existing.tripType === "group") {
+      setMembers(existing.participantCount);
+    }
+    setBasicsHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const dateRangeLabel = useMemo(
     () => formatDateRange(startDate, endDate),
     [startDate, endDate]
@@ -151,10 +252,21 @@ export function TripBasicsForm({
     return 1;
   }, [tripType, students, staff, members]);
 
+  // KSRTC eligibility is derived live from the same trip type + traveler
+  // count that feeds the summary panel and downstream Services/Transport
+  // steps — never a separately tracked number. An individual trip never
+  // qualifies, regardless of count.
+  const isIndividual = tripType === "individual";
+  const ksrtcReason = useMemo(
+    () => ksrtcEligibilityReason(travelerCount, isIndividual),
+    [travelerCount, isIndividual]
+  );
+
   // Downstream steps (Services → Transport) need real group size and dates
   // to validate vehicle capacity — write them into the shared listingDraft
   // as the organizer fills them in, rather than re-deriving or faking them.
   useEffect(() => {
+    if (!basicsHydrated) return;
     const participantBreakdown =
       tripType === "school" || tripType === "college"
         ? [
@@ -164,18 +276,23 @@ export function TripBasicsForm({
         : undefined;
     saveBasicsSummary({
       tripName: tripName || "Untitled Trip",
+      tripType,
       participantCount: travelerCount,
       participantBreakdown,
       startDate,
       endDate,
     });
-  }, [tripName, travelerCount, startDate, endDate, tripType, students, staff]);
+  }, [basicsHydrated, tripName, tripType, travelerCount, startDate, endDate, students, staff]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const params = new URLSearchParams();
     if (template) params.set("template", template.id);
-    router.push(`/trips/create/location?${params.toString()}`);
+    const nextPath =
+      tripMode === "pilgrimage"
+        ? "/trips/create/transport-preference"
+        : "/trips/create/location";
+    router.push(getReviewReturnHref(`${nextPath}?${params.toString()}`, template?.id));
   }
 
   const container: Variants = {
@@ -188,6 +305,10 @@ export function TripBasicsForm({
         hidden: { opacity: 0, y: 14 },
         show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
       };
+
+  if (redirectingToReview) {
+    return <div className="h-64" />;
+  }
 
   return (
     <div className="-mx-10 -my-10 min-h-[calc(100vh-2px)] bg-[#FAF8F4] px-10 py-10 xl:-mx-14 xl:-my-12 xl:px-14 xl:py-12">
@@ -280,6 +401,20 @@ export function TripBasicsForm({
                     Costs are calculated per student and finalized once
                     services are selected in a later step.
                   </p>
+                  <KsrtcEligibilityNote reason={ksrtcReason} />
+                </motion.div>
+              )}
+
+              {tripType === "individual" && (
+                <motion.div
+                  key="individual"
+                  {...fieldMotion}
+                  className="flex flex-col gap-4 border-t border-navy/10 pt-8"
+                >
+                  <span className="font-body text-xs font-semibold uppercase tracking-wide text-orange">
+                    03 &middot; Transport
+                  </span>
+                  <KsrtcEligibilityNote reason={ksrtcReason} />
                 </motion.div>
               )}
 
@@ -310,6 +445,7 @@ export function TripBasicsForm({
                     Costs are calculated per member and finalized once services
                     are selected in a later step.
                   </p>
+                  <KsrtcEligibilityNote reason={ksrtcReason} />
                 </motion.div>
               )}
             </AnimatePresence>

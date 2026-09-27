@@ -9,7 +9,16 @@ import {
   useScroll,
   useTransform,
 } from "motion/react";
+import { ArrowRight, Briefcase, GraduationCap, Landmark, Users } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+
+const INTENT_OPTIONS = [
+  { label: "Start from scratch", href: "/trips/create/loading" },
+  { label: "Use a template", href: "/templates" },
+  { label: "See every option", href: "/trips/new" },
+];
+
+const AUDIENCE_ICONS = [GraduationCap, Users, Briefcase, Landmark];
 
 const HEADLINE_WORDS = [
   { text: "Plan", emphasis: false },
@@ -80,7 +89,19 @@ export function HomeHero() {
       </motion.div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 pb-24 pt-40 sm:px-8">
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 pb-20 pt-40 sm:px-8">
+        <motion.p
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpVariants}
+          className="flex items-center gap-2.5 font-body text-xs font-semibold uppercase tracking-[0.18em] text-white/80"
+        >
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-mint opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-mint" />
+          </span>
+          Trip planning, reimagined
+        </motion.p>
         <h1
           aria-label={HEADLINE_WORDS.map((w) => w.text).join(" ")}
           className="max-w-3xl text-[clamp(3rem,6vw,5.5rem)] font-heading font-extrabold leading-[0.95] text-white"
@@ -144,7 +165,55 @@ export function HomeHero() {
             Browse Templates
           </Link>
         </motion.div>
+
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUpVariants}
+          transition={{ delay: prefersReducedMotion ? 0 : 0.85 }}
+          className="flex items-center gap-3 pt-2"
+        >
+          <div className="flex">
+            {AUDIENCE_ICONS.map((Icon, i) => (
+              <span
+                key={i}
+                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-navy bg-mint text-navy first:ml-0 -ml-2"
+              >
+                <Icon size={12} strokeWidth={2.25} />
+              </span>
+            ))}
+          </div>
+          <span className="font-body text-xs text-white/70">For schools, families, corporates &amp; pilgrimages</span>
+        </motion.div>
       </div>
     </section>
+  );
+}
+
+/** A real launcher into the same three entry points /trips/new offers —
+ *  styled as a slim intent strip in normal flow directly below the hero,
+ *  not a floating stats card. */
+export function IntentStrip() {
+  return (
+    <div className="border-b border-navy/[0.06] bg-white">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div>
+          <p className="font-body text-xs font-semibold uppercase tracking-[0.14em] text-orange">Start with a plan</p>
+          <h3 className="mt-1 font-heading text-lg font-semibold text-navy">Where do you want to begin?</h3>
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          {INTENT_OPTIONS.map(({ label, href }) => (
+            <Link
+              key={label}
+              href={href}
+              className="group inline-flex items-center gap-2 rounded-full border border-navy/15 px-4 py-2.5 font-body text-sm font-medium text-navy transition-colors hover:border-orange hover:bg-orange/5 hover:text-orange"
+            >
+              {label}
+              <ArrowRight size={14} className="text-orange opacity-0 transition-opacity group-hover:opacity-100" />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

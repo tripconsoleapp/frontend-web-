@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import { ArrowRight, Check, Minus } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
-import { DestinationStay, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { DestinationStay, getReviewReturnHref, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
 import { hotelServiceCost, staySummaryCounts, nightsLabel } from "@/lib/hotel-stays";
 import { HotelContextHeader } from "./hotel-context-header";
 
@@ -36,7 +36,7 @@ export function YourStaysSummary({ template }: { template?: string }) {
   function handleContinue() {
     const draft = getServicesDraft();
     saveServicesDraft({ ...draft, hotel: { ...draft.hotel, configured: true } });
-    router.push(`/trips/create/services${templateQuery}`);
+    router.push(getReviewReturnHref(`/trips/create/services${templateQuery}`, template));
   }
 
   const container: Variants = {

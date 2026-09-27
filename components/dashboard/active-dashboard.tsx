@@ -1,13 +1,13 @@
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { WorkspaceHero } from "@/components/dashboard/workspace-hero";
-import { QuickOverview } from "@/components/dashboard/quick-overview";
-import { ServiceRail } from "@/components/dashboard/service-rail";
+import { DashboardHero } from "@/components/dashboard/dashboard-hero";
+import { FeaturedTrips } from "@/components/dashboard/featured-trips";
+import { ServiceCollection } from "@/components/dashboard/service-collection";
 import { PilgrimageBanner } from "@/components/dashboard/pilgrimage-banner";
 import { RecommendationRail } from "@/components/dashboard/recommendation-rail";
-import { ActiveTripRail } from "@/components/dashboard/active-trip-rail";
-import { UpcomingTimeline } from "@/components/dashboard/upcoming-timeline";
+import { UpcomingPanel } from "@/components/dashboard/upcoming-panel";
+import { QuickActionsPanel } from "@/components/dashboard/quick-actions-panel";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
-import { Trip, getTripActionHref, getTripCounts } from "@/lib/mock-trips";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { Trip, getTripCounts } from "@/lib/mock-trips";
 import { Template, getTemplateById } from "@/lib/mock-templates";
 
 const RECOMMENDED_IDS = [
@@ -25,53 +25,40 @@ export function ActiveDashboard({
   trips: Trip[];
 }) {
   const counts = getTripCounts(trips);
-  const draftTrip = trips.find((trip) => trip.status === "draft");
+  const draftTrip = trips.find((trip) => trip.status === "draft") ?? null;
   const recommended = RECOMMENDED_IDS.map(getTemplateById).filter(
     (template): template is Template => Boolean(template)
   );
 
   return (
-    <div className="flex flex-col gap-10">
-      <DashboardHeader name={name} roleLabel="Organizer" />
+    <div className="flex flex-col gap-14 md:gap-16">
+      <DashboardHero name={name} roleLabel="Organizer" draftTrip={draftTrip} counts={counts} />
 
-      {draftTrip ? (
-        <WorkspaceHero
-          eyebrow="Continue where you left off"
-          heading={draftTrip.name}
-          description={draftTrip.location}
-          imageUrl={draftTrip.imageUrl}
-          imageAlt={draftTrip.name}
-          tag="Draft"
-          progress={draftTrip.progress}
-          stepLabel={draftTrip.currentStepLabel ?? "Trip setup"}
-          ctaLabel="Continue setup"
-          ctaHref={getTripActionHref(draftTrip)}
-        />
-      ) : (
-        <WorkspaceHero
-          eyebrow="Ready for your next journey?"
-          heading="Start planning your next trip listing."
-          imageUrl="https://images.unsplash.com/photo-1711192702535-eac61a78ecb0?auto=format&fit=crop&w=1600&q=80"
-          imageAlt="Kerala backwaters"
-          ctaLabel="Create New Listing"
-          ctaHref="/trips/new"
-        />
-      )}
+      <ScrollReveal>
+        <FeaturedTrips trips={trips} />
+      </ScrollReveal>
 
-      <QuickOverview counts={counts} />
+      <ScrollReveal>
+        <ServiceCollection />
+      </ScrollReveal>
 
-      <ServiceRail />
+      <ScrollReveal>
+        <PilgrimageBanner />
+      </ScrollReveal>
 
-      <PilgrimageBanner />
+      <ScrollReveal>
+        <RecommendationRail templates={recommended} />
+      </ScrollReveal>
 
-      <RecommendationRail templates={recommended} />
-
-      <ActiveTripRail trips={trips.slice(0, 6)} />
-
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[3fr_2fr]">
-        <UpcomingTimeline trips={trips} />
-        <RecentActivity />
-      </div>
+      <ScrollReveal>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr]">
+          <UpcomingPanel trips={trips} />
+          <div className="flex flex-col gap-6">
+            <QuickActionsPanel />
+            <RecentActivity />
+          </div>
+        </div>
+      </ScrollReveal>
     </div>
   );
 }

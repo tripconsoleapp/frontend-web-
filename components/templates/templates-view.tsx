@@ -47,12 +47,18 @@ function toggleValue<T>(list: T[], value: T): T[] {
     : [...list, value];
 }
 
-export function TemplatesView({ templates }: { templates: Template[] }) {
+export function TemplatesView({
+  templates,
+  initialGroupTypes = [],
+}: {
+  templates: Template[];
+  initialGroupTypes?: GroupType[];
+}) {
   const [search, setSearch] = useState("");
   const [destinationTypes, setDestinationTypes] = useState<DestinationType[]>(
     []
   );
-  const [groupTypes, setGroupTypes] = useState<GroupType[]>([]);
+  const [groupTypes, setGroupTypes] = useState<GroupType[]>(initialGroupTypes);
   const [duration, setDuration] = useState("any");
   const [maxBudget, setMaxBudget] = useState(3000);
 
