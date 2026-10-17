@@ -20,10 +20,14 @@ import { CreateStepper } from "@/components/trips/create-stepper";
 import { TripTypeCard } from "@/components/trips/trip-type-card";
 import { TripSummaryPanel } from "@/components/trips/trip-summary-panel";
 import { Template } from "@/lib/mock-templates";
-import { getBasicsSummary, getReviewReturnHref, getTripMode, saveBasicsSummary, saveTripMode, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { getBasicsSummary, getReviewReturnHref, getTripMode, saveBasicsSummary, saveTripMode, getServicesDraft, saveServicesDraft, getBackendTripId, saveBackendTripId, resetTripDraft } from "@/lib/listing-draft";
 import { instantiateFromTemplate } from "@/lib/template-instantiate";
 import { ksrtcEligibilityReason } from "@/lib/transport-eligibility";
 import { KsrtcEligibilityNote } from "@/components/trips/transport/ksrtc-eligibility-note";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api-client";
+import { createTrip } from "@/lib/trip-api";
+import { FormError } from "@/components/ui/form-error";
 
 type TripType = "school" | "college" | "group" | "individual";
 
@@ -110,14 +114,25 @@ export function TripBasicsForm({
   participants,
   initialMode,
   initialEntry,
+  resetDraft,
 }: {
   template?: Template;
   participants?: string;
   initialMode?: "pilgrimage";
   initialEntry?: "scheduled";
+  /** True only when this mount came from the dashboard/`/trips/new`
+   *  "Start from Scratch" link with `?reset=1` — see trip-basics-form.tsx's
+   *  mount effect and lib/listing-draft.ts's resetTripDraft(). Never set on
+   *  a resume (back-navigation, refresh of an in-progress draft, template,
+   *  or scheduled-trip path), so those keep loading the existing draft
+   *  exactly as before. */
+  resetDraft?: boolean;
 }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
+  const { authedFetch } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Pilgrimage is a mode of the same trip model, not a separate flow —
   // resolved once (URL param for a fresh "scratch"/"scheduled" start, the
@@ -147,6 +162,19 @@ export function TripBasicsForm({
         return;
       }
     } else {
+      // Explicit "Start from Scratch" entry only — wipes the previous
+      // trip's backendTripId, basics, destinations, services, and
+      // itinerary before anything below reads or re-saves them, so this
+      // mount never inherits a prior trip's data. The previous trip's own
+      // record in the demo backend (lib/demo-backend.ts) is untouched —
+      // only this single shared local draft slot is cleared. Strip the
+      // query param immediately afterward so a later refresh of this same
+      // URL can't re-trigger the wipe once the organizer has started
+      // filling in the new trip's basics.
+      if (resetDraft) {
+        resetTripDraft();
+        router.replace("/trips/create/basics");
+      }
       const existing = getTripMode();
       const resolvedMode: "standard" | "pilgrimage" =
         existing.mode === "pilgrimage" || initialMode === "pilgrimage" ? "pilgrimage" : "standard";
@@ -284,8 +312,46 @@ export function TripBasicsForm({
     });
   }, [basicsHydrated, tripName, tripType, travelerCount, startDate, endDate, students, staff]);
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setSubmitError(null);
+
+    // Only the plain Start-from-Scratch path creates a backend trip in this
+    // phase — Templates, Join Scheduled Trip, and Pilgrimage keep their
+    // existing (unconnected) behavior untouched. A draft that already has a
+    // backend trip id (e.g. the organizer went back and re-submitted Basics)
+    // is never re-created.
+    const isPlainScratchTrip = !template && tripMode === "standard" && initialEntry !== "scheduled";
+    if (isPlainScratchTrip && !getBackendTripId()) {
+      setSubmitting(true);
+      try {
+        const trip = await createTrip(
+          {
+            tripName: tripName || "Untitled Trip",
+            tripType,
+            startDate,
+            endDate,
+            participantCount: travelerCount,
+            staffCount: tripType === "school" || tripType === "college" ? staff : 0,
+          },
+          authedFetch
+        );
+        saveBackendTripId(trip.id);
+      } catch (err) {
+        setSubmitting(false);
+        setSubmitError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not save your trip. Please try again."
+        );
+        // Do not navigate on failure — the form's local state (tripName,
+        // dates, etc.) is untouched, so the organizer can fix the problem
+        // and press Next again.
+        return;
+      }
+      setSubmitting(false);
+    }
+
     const params = new URLSearchParams();
     if (template) params.set("template", template.id);
     const nextPath =
@@ -527,21 +593,26 @@ export function TripBasicsForm({
               />
             </motion.div>
 
-            <motion.div
-              variants={item}
-              className="flex flex-col gap-4 border-t border-navy/10 pt-8 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <p className="font-body text-sm text-text-grey">
-                Your trip basics are ready — next, map out your route.
-              </p>
-              <motion.button
-                type="submit"
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className={buttonVariants({ variant: "accent", size: "lg", className: "w-fit shrink-0" })}
-              >
-                Next: Destinations &rarr;
-              </motion.button>
+            <motion.div variants={item} className="flex flex-col gap-3 border-t border-navy/10 pt-8">
+              <FormError message={submitError} />
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="font-body text-sm text-text-grey">
+                  Your trip basics are ready — next, map out your route.
+                </p>
+                <motion.button
+                  type="submit"
+                  disabled={submitting}
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={buttonVariants({
+                    variant: "accent",
+                    size: "lg",
+                    className: "w-fit shrink-0 disabled:cursor-not-allowed disabled:opacity-40",
+                  })}
+                >
+                  {submitting ? "Saving..." : "Next: Destinations →"}
+                </motion.button>
+              </div>
             </motion.div>
           </div>
 

@@ -6,16 +6,19 @@ import { motion, useReducedMotion, type Variants } from "motion/react";
 import { ArrowRight, Check, Compass, Minus } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
 import { useTripContext } from "@/lib/use-trip-context";
-import { DestinationActivityPlan, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { DestinationActivityPlan, getBackendTripId, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
 import { computeStayDates, formatStayDate } from "@/lib/hotel-stays";
 import { activityCounts, destinationTotal, reconcileActivityDestinations } from "@/lib/activity-plan";
 import { ActivityContextHeader } from "./activity-context-header";
 import { SkipActivitiesDialog } from "./skip-activities-dialog";
+import { useAuth } from "@/lib/auth-context";
+import { activityServicesToDestinationPatches, type BackendTripService } from "@/lib/activity-service-api";
 
 export function ActivityPlanningHub({ template }: { template?: string }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
   const trip = useTripContext();
+  const { authedFetch } = useAuth();
   const templateQuery = template ? `?template=${template}` : "";
   const backHref = `/trips/create/services${templateQuery}`;
 
@@ -24,17 +27,46 @@ export function ActivityPlanningHub({ template }: { template?: string }) {
 
   useEffect(() => {
     if (!trip.ready) return;
-    const draft = getServicesDraft();
-    const reconciled = reconcileActivityDestinations(draft.activities.destinations, trip.stops);
-    saveServicesDraft({
-      ...draft,
-      activities: {
-        ...draft.activities,
-        destinations: reconciled,
-        configured: reconciled.length > 0 && reconciled.every((d) => d.status !== "not_planned"),
-      },
-    });
-    setDestinations(reconciled);
+    let cancelled = false;
+    (async () => {
+      const draft = getServicesDraft();
+      let reconciled = reconcileActivityDestinations(draft.activities.destinations, trip.stops);
+
+      // Backend is authoritative once a real trip exists — recover any
+      // confirmed activity selections already persisted there (e.g. after
+      // a refresh cleared sessionStorage) and let them override the local
+      // copy, the same way Hotel/Meals rehydrate from GET /trips/:id.
+      const backendTripId = getBackendTripId();
+      if (backendTripId) {
+        try {
+          const backendTrip = await authedFetch<{ services: BackendTripService[] }>(
+            `/trips/${backendTripId}`
+          );
+          const patches = activityServicesToDestinationPatches(backendTrip.services ?? []);
+          if (patches.size > 0) {
+            reconciled = reconciled.map((d) => patches.get(d.destinationId) ?? d);
+          }
+        } catch {
+          // Non-fatal — the organizer just continues with the local/route-
+          // derived list; a subsequent confirm still reports its own
+          // success/failure.
+        }
+      }
+
+      if (cancelled) return;
+      saveServicesDraft({
+        ...draft,
+        activities: {
+          ...draft.activities,
+          destinations: reconciled,
+          configured: reconciled.length > 0 && reconciled.every((d) => d.status !== "not_planned"),
+        },
+      });
+      setDestinations(reconciled);
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.ready]);
 

@@ -9,18 +9,26 @@ import { formatCurrency } from "@/lib/mock-trips";
 import {
   DestinationStay,
   PendingHotelSelection,
+  getBackendTripId,
   getServicesDraft,
   saveServicesDraft,
 } from "@/lib/listing-draft";
 import { buildStayPricing, nightsLabel } from "@/lib/hotel-stays";
 import { HotelContextHeader } from "./hotel-context-header";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api-client";
+import { createHotelService, deleteHotelService } from "@/lib/hotel-service-api";
+import { FormError } from "@/components/ui/form-error";
 
 export function HotelConfirm({ destinationId, template }: { destinationId: string; template?: string }) {
   const router = useRouter();
   const templateQuery = template ? `?template=${template}` : "";
+  const { authedFetch } = useAuth();
 
   const [pending, setPending] = useState<PendingHotelSelection | null>(null);
   const [stay, setStay] = useState<DestinationStay | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     const draft = getServicesDraft();
@@ -43,12 +51,47 @@ export function HotelConfirm({ destinationId, template }: { destinationId: strin
   const roomCount = pending.rooms.reduce((sum, r) => sum + r.quantity, 0);
   const guestsCovered = pending.rooms.reduce((sum, r) => sum + r.quantity * r.capacity, 0);
 
-  function handleAddToTrip() {
+  async function handleAddToTrip() {
+    let updatedStay: DestinationStay = {
+      ...stay!,
+      status: "booked",
+      hotel: pending!.hotel,
+      rooms: pending!.rooms,
+      total: pricing.total,
+    };
+
+    const backendTripId = getBackendTripId();
+    if (backendTripId) {
+      setSubmitting(true);
+      setSyncError(null);
+      try {
+        // Reconfirming (same or a different hotel) never leaves two live
+        // TripService rows for this stay — the prior one is removed first.
+        // This is demo/config persistence, not a real booking or payment
+        // record, so replace-on-reconfirm is safe.
+        if (updatedStay.backendId) {
+          await deleteHotelService(backendTripId, updatedStay.backendId, authedFetch);
+        }
+        const created = await createHotelService(backendTripId, updatedStay, authedFetch);
+        updatedStay = { ...updatedStay, backendId: created.id };
+      } catch (err) {
+        setSubmitting(false);
+        setSyncError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not save this hotel selection. Please try again."
+        );
+        // Never mark the stay as booked locally when the backend rejected
+        // it — the organizer's in-progress selection (`pending`) is left
+        // untouched so they can retry without re-picking the room.
+        return;
+      }
+      setSubmitting(false);
+    }
+
     const draft = getServicesDraft();
     const next = draft.hotel.stays.map((s) =>
-      s.destinationId === destinationId
-        ? { ...s, status: "booked" as const, hotel: pending!.hotel, rooms: pending!.rooms, total: pricing.total }
-        : s
+      s.destinationId === destinationId ? updatedStay : s
     );
     const nextPending = next.find((s) => s.status === "pending");
     saveServicesDraft({
@@ -140,19 +183,28 @@ export function HotelConfirm({ destinationId, template }: { destinationId: strin
               <span className="font-heading text-xl font-bold text-navy">{formatCurrency(pricing.total)}</span>
             </div>
 
+            {syncError && (
+              <div className="mt-4">
+                <FormError message={syncError} />
+              </div>
+            )}
+
             <motion.button
               type="button"
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleAddToTrip}
-              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-full bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90"
+              disabled={submitting}
+              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-full bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <Check size={15} /> Add to Trip &mdash; {formatCurrency(pricing.total)}
+              <Check size={15} />{" "}
+              {submitting ? "Saving..." : `Add to Trip — ${formatCurrency(pricing.total)}`}
             </motion.button>
             <button
               type="button"
+              disabled={submitting}
               onClick={() => router.push(`/trips/create/services/hotel/${destinationId}/${pending.hotel.id}/rooms${templateQuery}`)}
-              className="mt-2 flex w-full items-center justify-center gap-1 font-body text-sm font-medium text-navy underline underline-offset-2 transition-colors hover:text-orange"
+              className="mt-2 flex w-full items-center justify-center gap-1 font-body text-sm font-medium text-navy underline underline-offset-2 transition-colors hover:text-orange disabled:cursor-not-allowed disabled:opacity-40"
             >
               Choose a Different Room <ArrowRight size={12} />
             </button>

@@ -28,6 +28,12 @@ export interface VehicleSelectionItem {
   ac: boolean;
   rating: number;
   trips: number;
+  /** The real backend TripService.id once this vehicle has been persisted
+   *  (Start-from-Scratch trips only — see lib/vehicle-service-api.ts). This
+   *  is a demo/config record, never a real booking — see that module's
+   *  header comment for why `operatorServiceId` is a "demo-vehicle:" tag
+   *  rather than a real Listing reference. */
+  backendId?: string;
 }
 
 export interface VehicleDraft {
@@ -81,6 +87,12 @@ export interface DestinationStay {
   hotel: HotelPropertySelection | null;
   rooms: RoomSelectionItem[];
   total: number;
+  /** The real backend TripService.id once this stay has been persisted
+   *  (Start-from-Scratch trips only — see lib/hotel-service-api.ts). This is
+   *  a demo/config record, never a real booking — see that module's header
+   *  comment for why `operatorServiceId` is a "demo-hotel:" tag rather than
+   *  a real Listing reference. */
+  backendId?: string;
 }
 
 /** In-progress hotel+room choice for one destination, held while the user is
@@ -162,6 +174,12 @@ export interface MealInstance {
    *  so a meal confirmed for 46 stays "46 meals" even if Basics changes. */
   participantCount: number;
   total: number;
+  /** The real backend TripService.id once this meal has been persisted
+   *  (Start-from-Scratch trips only — see lib/meal-service-api.ts). This is
+   *  a demo/config record, never a real booking — see that module's header
+   *  comment for why `operatorServiceId` is a "demo-restaurant:" tag rather
+   *  than a real Listing reference. */
+  backendId?: string;
 }
 
 export interface MealPlanDraft {
@@ -210,6 +228,13 @@ export interface DestinationActivityPlan {
   destinationName: string;
   status: ActivityDestinationStatus;
   activities: ScheduledActivity[];
+  /** The real backend TripService.id once this destination's activities
+   *  have been persisted (Start-from-Scratch trips only — see
+   *  lib/activity-service-api.ts). This is a demo/config record, never a
+   *  real booking — see that module's header comment for why
+   *  `operatorServiceId` is a "demo-activity:" tag rather than a real
+   *  Listing reference. */
+  backendId?: string;
 }
 
 export interface ActivitiesDraft {
@@ -334,6 +359,12 @@ export interface ItineraryDraft {
   status: ItineraryStatus;
   generatedAt: string | null;
   days: ItineraryDay[];
+  /** The real backend TripService.id once this itinerary has been
+   *  persisted as a configuration snapshot (Start-from-Scratch trips
+   *  only — see lib/itinerary-service-api.ts). This is demo/config
+   *  bookkeeping, never the backend's own generated Trip.itinerarySnapshot
+   *  — see that module's header comment for the full distinction. */
+  backendId?: string;
 }
 
 export const DEFAULT_ITINERARY_DRAFT: ItineraryDraft = {
@@ -608,6 +639,30 @@ interface ListingDraft {
   itinerary?: ItineraryDraft;
   trip?: TripRecord;
   tripMode?: TripModeInfo;
+  /** The real backend Trip.id once Basics has been persisted via
+   *  POST /trips (Start-from-Scratch only — see trip-basics-form.tsx).
+   *  Absent for template/scheduled/pilgrimage drafts, which don't create a
+   *  backend trip in this phase, and absent entirely until that call
+   *  succeeds — never set optimistically. */
+  backendTripId?: string;
+  /** The real backend Trip returned by PATCH /trips/:id/status (see
+   *  lib/trip-api.ts's submitTrip) once submission has actually succeeded.
+   *  This is the Submitted screen's authoritative backend-confirmed source
+   *  — set exactly once, only from a real 200 response, never fabricated. */
+  submittedTrip?: SubmittedTripSummary;
+}
+
+/** The subset of the backend's PATCH /trips/:id/status response that the
+ *  Submitted screen needs to prove — and display — a real backend
+ *  confirmation, rather than a locally invented one. */
+export interface SubmittedTripSummary {
+  id: string;
+  status: string;
+  version: number;
+  declarationsConfirmed: boolean;
+  costSnapshot: unknown;
+  itinerarySnapshot: unknown;
+  confirmedAt: string;
 }
 
 function readDraft(): ListingDraft {
@@ -687,6 +742,42 @@ export function getDestinationsSummary(): DestinationsSummary | null {
 
 export function saveDestinationsSummary(destinationsSummary: DestinationsSummary) {
   writeDraft({ destinationsSummary });
+}
+
+export function getBackendTripId(): string | null {
+  return readDraft().backendTripId ?? null;
+}
+
+export function saveBackendTripId(id: string) {
+  writeDraft({ backendTripId: id });
+}
+
+/** Wipes the entire shared listingDraft slot (basics, destinations,
+ *  services, itinerary, backendTripId, submittedTrip, tripRecord,
+ *  tripMode) so a genuinely new Start-from-Scratch trip never inherits a
+ *  previous trip's backend id or selections. Only ever called from the
+ *  explicit "Start from Scratch" entry point (see trip-basics-form.tsx) —
+ *  never from a resume/back-navigation path. This never touches the demo
+ *  backend's own store (lib/demo-backend.ts's sessionStorage key): the
+ *  previous trip's persisted destinations/services remain completely
+ *  intact there under its own id, just no longer referenced by this
+ *  single-slot local draft. */
+export function resetTripDraft() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // sessionStorage unavailable — nothing to clear, the in-memory state
+    // for this session was never going to survive anyway.
+  }
+}
+
+export function getSubmittedTrip(): SubmittedTripSummary | null {
+  return readDraft().submittedTrip ?? null;
+}
+
+export function saveSubmittedTrip(trip: SubmittedTripSummary) {
+  writeDraft({ submittedTrip: trip });
 }
 
 export function getItineraryDraft(): ItineraryDraft {
@@ -810,14 +901,25 @@ function migrateTripRecord(stored: any): TripRecord {
   };
 }
 
-export function getTripRecord(): TripRecord {
+/** `preferredId` is only ever used the FIRST time this trip's local
+ *  operations/payment/passenger/verification record is created — it lets a
+ *  caller that already knows the real backend/demo-backend trip id (see
+ *  submission-processing.tsx, the only normal-flow caller that runs before
+ *  any of the six secondary pages) seed the new record with that same id,
+ *  so a plain Start-from-Scratch trip's "Operations" URL and this record's
+ *  id refer to the same trip. An already-existing record is always
+ *  returned as-is — its id is never reassigned, and `preferredId` is
+ *  ignored in that case. Template/pilgrimage/scheduled-join trips (which
+ *  never call this with a preferredId) keep the original random
+ *  `generateTripId()` scheme exactly as before. */
+export function getTripRecord(preferredId?: string): TripRecord {
   const stored = readDraft().trip;
   if (stored && typeof stored.id === "string") {
     const migrated = migrateTripRecord(stored);
     if (migrated !== stored) writeDraft({ trip: migrated });
     return migrated;
   }
-  const created = defaultTripRecord(generateTripId());
+  const created = defaultTripRecord(preferredId ?? generateTripId());
   writeDraft({ trip: created });
   return created;
 }

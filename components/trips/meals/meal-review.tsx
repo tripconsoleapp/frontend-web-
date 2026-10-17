@@ -5,17 +5,24 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { Check, Edit3 } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
-import { MealInstance, MealMenuSelection, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { MealInstance, MealMenuSelection, getBackendTripId, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
 import { aggregateResponses, fitsGroup, getGuestResponses, parseMealKey, selectionsTotal } from "@/lib/meal-plan";
 import { MealContextHeader } from "./meal-context-header";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api-client";
+import { replaceMealService } from "@/lib/meal-service-api";
+import { FormError } from "@/components/ui/form-error";
 
 export function MealReview({ mealKey: key, template }: { mealKey: string; template?: string }) {
   const router = useRouter();
   const { dayIndex, mealType } = parseMealKey(key);
   const templateQuery = template ? `?template=${template}` : "";
+  const { authedFetch } = useAuth();
 
   const [meal, setMeal] = useState<MealInstance | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     const draft = getServicesDraft();
@@ -40,13 +47,40 @@ export function MealReview({ mealKey: key, template }: { mealKey: string; templa
   const fits = fitsGroup(meal.restaurant.capacity, meal.participantCount);
   const canConfirm = finalSelections.length > 0 && fits;
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!meal || !canConfirm) return;
+    let confirmedMeal: MealInstance = { ...meal, status: "confirmed", selections: finalSelections, total };
+
+    const backendTripId = getBackendTripId();
+    if (backendTripId) {
+      setSubmitting(true);
+      setSyncError(null);
+      try {
+        // Reconfirming (same or a different restaurant/menu) never leaves
+        // two live TripService rows for this meal — the prior one (if any)
+        // is only removed once the new one is confirmed created. This is
+        // demo/config persistence (see lib/meal-service-api.ts), never a
+        // real booking.
+        const backendId = await replaceMealService(backendTripId, meal.backendId, confirmedMeal, authedFetch);
+        confirmedMeal = { ...confirmedMeal, backendId };
+      } catch (err) {
+        setSubmitting(false);
+        setSyncError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not save this meal. Please try again."
+        );
+        // Never mark the meal confirmed locally when the backend rejected
+        // it — the in-progress selection is left untouched so the organizer
+        // can retry without re-picking dishes.
+        return;
+      }
+      setSubmitting(false);
+    }
+
     const draft = getServicesDraft();
     const next = draft.restaurant.meals.map((m) =>
-      m.dayIndex === dayIndex && m.mealType === mealType
-        ? { ...m, status: "confirmed" as const, selections: finalSelections, total }
-        : m
+      m.dayIndex === dayIndex && m.mealType === mealType ? confirmedMeal : m
     );
     saveServicesDraft({
       ...draft,
@@ -148,19 +182,22 @@ export function MealReview({ mealKey: key, template }: { mealKey: string; templa
         </div>
       </div>
 
+      {syncError && <FormError message={syncError} />}
+
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          disabled={!canConfirm}
+          disabled={!canConfirm || submitting}
           onClick={handleConfirm}
           className="inline-flex items-center gap-1.5 rounded-full bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Check size={15} /> Confirm Meal
+          <Check size={15} /> {submitting ? "Saving..." : "Confirm Meal"}
         </button>
         <button
           type="button"
+          disabled={submitting}
           onClick={() => router.push(`/trips/create/services/restaurant/${key}/menu${templateQuery}`)}
-          className="inline-flex items-center gap-1.5 font-body text-sm font-medium text-navy underline underline-offset-2 transition-colors hover:text-orange"
+          className="inline-flex items-center gap-1.5 font-body text-sm font-medium text-navy underline underline-offset-2 transition-colors hover:text-orange disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Edit3 size={13} /> Edit Selection
         </button>

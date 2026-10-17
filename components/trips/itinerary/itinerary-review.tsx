@@ -7,17 +7,24 @@ import { AlertTriangle, ArrowRight, Check, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/mock-trips";
 import { useTripContext } from "@/lib/use-trip-context";
-import { ItineraryDraft, getItineraryDraft, getReviewReturnHref, getServicesDraft, saveItineraryDraft } from "@/lib/listing-draft";
+import { ItineraryDraft, getBackendTripId, getItineraryDraft, getReviewReturnHref, getServicesDraft, saveItineraryDraft } from "@/lib/listing-draft";
 import { itineraryHasBlockingErrors, itineraryTotalCost } from "@/lib/itinerary";
 import { ItineraryContextHeader, TravelerSummary } from "./itinerary-context-header";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api-client";
+import { replaceItineraryService } from "@/lib/itinerary-service-api";
+import { FormError } from "@/components/ui/form-error";
 
 export function ItineraryReview({ template }: { template?: string }) {
   const router = useRouter();
   const trip = useTripContext();
   const templateQuery = template ? `?template=${template}` : "";
+  const { authedFetch } = useAuth();
 
   const [itinerary, setItinerary] = useState<ItineraryDraft | null>(null);
   const [saved, setSaved] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     setItinerary(getItineraryDraft());
@@ -54,8 +61,37 @@ export function ItineraryReview({ template }: { template?: string }) {
     { label: "No critical conflicts", pass: errorCount === 0 },
   ];
 
-  function handleSave() {
-    const next = { ...itinerary!, status: (hasErrors ? "draft" : "ready") as "draft" | "ready" };
+  async function handleSave() {
+    let next: ItineraryDraft = { ...itinerary!, status: (hasErrors ? "draft" : "ready") as "draft" | "ready" };
+
+    const backendTripId = getBackendTripId();
+    if (backendTripId) {
+      setSubmitting(true);
+      setSyncError(null);
+      try {
+        // Replaces whatever itinerary configuration snapshot already exists
+        // for this trip — create-new-then-delete-old (see
+        // lib/itinerary-service-api.ts), so a failed save never destroys a
+        // previously valid snapshot. This is demo/config persistence, never
+        // the backend's own generated Trip.itinerarySnapshot.
+        const backendId = await replaceItineraryService(backendTripId, itinerary!.backendId, next, authedFetch);
+        next = { ...next, backendId };
+      } catch (err) {
+        setSubmitting(false);
+        setSyncError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not save this itinerary. Please try again."
+        );
+        // Never mark the save as successful locally when the backend
+        // rejected it — the itinerary the organizer built is left
+        // completely untouched (and the previous backend snapshot, if any,
+        // is untouched too) so they can retry.
+        return;
+      }
+      setSubmitting(false);
+    }
+
     saveItineraryDraft(next);
     setItinerary(next);
     setSaved(true);
@@ -157,9 +193,16 @@ export function ItineraryReview({ template }: { template?: string }) {
         </div>
       </div>
 
+      {syncError && <FormError message={syncError} />}
+
       <div className="flex justify-end">
-        <button type="button" onClick={handleSave} className="inline-flex items-center gap-1.5 rounded-full bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90">
-          Save Itinerary <ArrowRight size={14} />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={submitting}
+          className="inline-flex items-center gap-1.5 rounded-full bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {submitting ? "Saving..." : "Save Itinerary"} <ArrowRight size={14} />
         </button>
       </div>
     </div>

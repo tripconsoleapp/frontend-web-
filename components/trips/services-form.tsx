@@ -354,18 +354,24 @@ export function ServicesForm({ template }: { template?: string }) {
               <span className="font-body text-sm font-semibold text-navy">
                 Estimated Total
               </span>
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={subtotal}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.2 }}
-                  className="font-heading text-lg font-bold text-navy"
-                >
-                  {formatCurrency(subtotal)}
-                </motion.span>
-              </AnimatePresence>
+              {/* Plain, unanimated span — not AnimatePresence/key-swapped.
+                  The mount effect below (which reads the real persisted
+                  draft) can change `subtotal` moments after this component
+                  first mounts, in the same commit as React's hydration. A
+                  keyed AnimatePresence child mounted right at that boundary
+                  reliably ends up orphaned by Framer Motion in this app
+                  (confirmed empirically across several AnimatePresence
+                  configurations — `mode="wait"`, default mode, with and
+                  without `initial={false}`): the pre-hydration child never
+                  gets properly tracked, so it either blocks the real value
+                  from ever appearing or sits on screen indefinitely
+                  overlapping it. A static span has no such lifecycle to
+                  race and always reflects the current `subtotal` exactly —
+                  the page's other animations (card stagger, expand/collapse)
+                  are untouched. */}
+              <span className="font-heading text-lg font-bold text-navy">
+                {formatCurrency(subtotal)}
+              </span>
             </div>
 
             {hasInvalidKsrtcSelection && (

@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/mock-trips";
 import { useTripContext } from "@/lib/use-trip-context";
 import {
   DestinationStay,
+  getBackendTripId,
   getServicesDraft,
   saveServicesDraft,
 } from "@/lib/listing-draft";
@@ -15,11 +16,14 @@ import { reconcileStays, staySummaryCounts, nightsLabel } from "@/lib/hotel-stay
 import { HotelContextHeader } from "./hotel-context-header";
 import { DestinationNavigator } from "./destination-navigator";
 import { SkipStayDialog } from "./skip-stay-dialog";
+import { useAuth } from "@/lib/auth-context";
+import { hotelServicesToStayPatches, type BackendTripService } from "@/lib/hotel-service-api";
 
 export function HotelOverview({ template }: { template?: string }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
   const trip = useTripContext();
+  const { authedFetch } = useAuth();
 
   const [stays, setStays] = useState<DestinationStay[] | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -27,14 +31,41 @@ export function HotelOverview({ template }: { template?: string }) {
 
   useEffect(() => {
     if (!trip.ready) return;
-    const draft = getServicesDraft();
-    const reconciled = reconcileStays(draft.hotel.stays, trip.stops, trip.startDate);
-    saveServicesDraft({
-      ...draft,
-      hotel: { ...draft.hotel, stays: reconciled, configured: reconciled.length > 0 && reconciled.every((s) => s.status !== "pending") },
-    });
-    setStays(reconciled);
-    setFocusId((current) => current ?? reconciled.find((s) => s.status === "pending")?.destinationId ?? reconciled[0]?.destinationId ?? null);
+    let cancelled = false;
+    (async () => {
+      const draft = getServicesDraft();
+      let reconciled = reconcileStays(draft.hotel.stays, trip.stops, trip.startDate);
+
+      // Backend is authoritative once a real trip exists — recover any
+      // hotel selections already persisted there (e.g. after a refresh
+      // that cleared sessionStorage) and let them override the local copy.
+      const backendTripId = getBackendTripId();
+      if (backendTripId) {
+        try {
+          const backendTrip = await authedFetch<{ services: BackendTripService[] }>(
+            `/trips/${backendTripId}`
+          );
+          const patches = hotelServicesToStayPatches(backendTrip.services ?? []);
+          if (patches.size > 0) {
+            reconciled = reconciled.map((s) => patches.get(s.destinationId) ?? s);
+          }
+        } catch {
+          // Non-fatal — continue with the local/route-derived list; any
+          // subsequent add/change still reports its own success or failure.
+        }
+      }
+
+      if (cancelled) return;
+      saveServicesDraft({
+        ...draft,
+        hotel: { ...draft.hotel, stays: reconciled, configured: reconciled.length > 0 && reconciled.every((s) => s.status !== "pending") },
+      });
+      setStays(reconciled);
+      setFocusId((current) => current ?? reconciled.find((s) => s.status === "pending")?.destinationId ?? reconciled[0]?.destinationId ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.ready]);
 

@@ -10,9 +10,10 @@ export default async function TripBasicsPage({
     participants?: string;
     mode?: string;
     entry?: string;
+    reset?: string;
   }>;
 }) {
-  const { template: templateId, participants, mode, entry } = await searchParams;
+  const { template: templateId, participants, mode, entry, reset } = await searchParams;
   const template = templateId ? getTemplateById(templateId) : undefined;
 
   return (
@@ -22,6 +23,7 @@ export default async function TripBasicsPage({
         participants={participants}
         initialMode={mode === "pilgrimage" ? "pilgrimage" : undefined}
         initialEntry={entry === "scheduled" ? "scheduled" : undefined}
+        resetDraft={reset === "1"}
       />
     </AppShell>
   );

@@ -7,15 +7,29 @@ import { CheckCircle2, Mail, Phone, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PasswordInput, PasswordStrengthMeter } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
+import { FormError } from "@/components/ui/form-error";
+import { savePendingSignup } from "@/lib/pending-signup";
 
 export function SignupForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setError(null);
+    // The backend only accepts the account's role at registration time,
+    // which isn't chosen until the next screen — hold these fields there
+    // rather than losing them (they can't safely travel via the URL).
+    savePendingSignup({ email, phone: mobile || undefined, password });
     router.push(`/role-selection?email=${encodeURIComponent(email)}`);
   }
 
@@ -55,6 +69,8 @@ export function SignupForm() {
         name="mobile"
         type="tel"
         placeholder="98765 43210"
+        value={mobile}
+        onChange={(e) => setMobile(e.target.value)}
         leftElement={<Phone size={18} />}
         hint="Used for trip alerts and coordination."
         required
@@ -76,6 +92,8 @@ export function SignupForm() {
         label="Confirm Password"
         name="confirmPassword"
         placeholder="••••••••"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
         required
       />
 
@@ -99,6 +117,8 @@ export function SignupForm() {
           of TripConsole.
         </span>
       </label>
+
+      <FormError message={error} />
 
       <Button type="submit" variant="accent" size="lg" className="w-full">
         Create Account

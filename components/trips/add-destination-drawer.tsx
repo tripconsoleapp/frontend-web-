@@ -14,6 +14,7 @@ import {
 } from "@/lib/kerala-locations";
 import { DestinationStop } from "@/components/trips/itinerary-stop-card";
 import { useIsDesktop } from "@/lib/use-is-desktop";
+import { FormError } from "@/components/ui/form-error";
 
 const RECENT_IDS = ["munnar", "thekkady", "wayanad"];
 
@@ -25,6 +26,11 @@ interface AddDestinationDrawerProps {
   initialLocationId?: string | null;
   onClose: () => void;
   onSubmit: (stop: DestinationStop) => void;
+  /** Set while a backend save is in flight (Start-from-Scratch trips only —
+   *  see destinations-flow.tsx). Undefined/false everywhere else, so the
+   *  drawer behaves exactly as before when there's no backend to wait on. */
+  submitting?: boolean;
+  submitError?: string | null;
 }
 
 export function AddDestinationDrawer({
@@ -35,6 +41,8 @@ export function AddDestinationDrawer({
   initialLocationId,
   onClose,
   onSubmit,
+  submitting,
+  submitError,
 }: AddDestinationDrawerProps) {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -319,25 +327,29 @@ export function AddDestinationDrawer({
               )}
             </div>
 
-            <div className="flex gap-3 bg-navy/[0.02] px-6 py-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 rounded-full border border-navy/15 py-3 font-body text-base font-medium text-navy transition-colors hover:bg-navy/5"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={!selected}
-                onClick={handleSubmit}
-                className={buttonVariants({
-                  variant: "accent",
-                  className: "flex-1 disabled:cursor-not-allowed disabled:opacity-40",
-                })}
-              >
-                {isEditing ? "Save Changes" : "Add to Route"}
-              </button>
+            <div className="flex flex-col gap-3 bg-navy/[0.02] px-6 py-4">
+              {submitError && <FormError message={submitError} />}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={submitting}
+                  className="flex-1 rounded-full border border-navy/15 py-3 font-body text-base font-medium text-navy transition-colors hover:bg-navy/5 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!selected || submitting}
+                  onClick={handleSubmit}
+                  className={buttonVariants({
+                    variant: "accent",
+                    className: "flex-1 disabled:cursor-not-allowed disabled:opacity-40",
+                  })}
+                >
+                  {submitting ? "Saving..." : isEditing ? "Save Changes" : "Add to Route"}
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

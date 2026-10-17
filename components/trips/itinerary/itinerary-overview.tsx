@@ -6,9 +6,11 @@ import { motion, useReducedMotion, type Variants } from "motion/react";
 import { AlertTriangle, ArrowRight, Circle } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
 import { useTripContext } from "@/lib/use-trip-context";
-import { ItineraryDraft, getItineraryDraft } from "@/lib/listing-draft";
+import { ItineraryDraft, getBackendTripId, getItineraryDraft, saveItineraryDraft } from "@/lib/listing-draft";
 import { dayPlannedMinutes, dayTotalCost } from "@/lib/itinerary";
 import { ItineraryContextHeader, TravelerSummary } from "./itinerary-context-header";
+import { useAuth } from "@/lib/auth-context";
+import { findItineraryConfigurationSnapshot, type BackendTripService } from "@/lib/itinerary-service-api";
 
 function formatPlannedHours(minutes: number) {
   const hours = minutes / 60;
@@ -24,11 +26,45 @@ export function ItineraryOverview({ template }: { template?: string }) {
   const shouldReduce = useReducedMotion();
   const trip = useTripContext();
   const templateQuery = template ? `?template=${template}` : "";
+  const { authedFetch } = useAuth();
 
   const [itinerary, setItinerary] = useState<ItineraryDraft | null>(null);
 
   useEffect(() => {
-    setItinerary(getItineraryDraft());
+    let cancelled = false;
+    (async () => {
+      let draft = getItineraryDraft();
+
+      // Backend is authoritative once a real trip exists — recover a
+      // previously saved itinerary configuration that isn't in local state
+      // (e.g. after a refresh cleared sessionStorage) and restore it
+      // exactly as saved. Never overrides a draft that's already present
+      // locally, and never regenerates — the frontend's own generation/
+      // editing logic (lib/itinerary.ts) is not invoked here at all.
+      const backendTripId = getBackendTripId();
+      if ((draft.status === "not_generated" || draft.days.length === 0) && backendTripId) {
+        try {
+          const backendTrip = await authedFetch<{ services: BackendTripService[] }>(
+            `/trips/${backendTripId}`
+          );
+          const restored = findItineraryConfigurationSnapshot(backendTrip.services ?? []);
+          if (restored) {
+            draft = restored;
+            saveItineraryDraft(draft);
+          }
+        } catch {
+          // Non-fatal — the organizer just continues with local/generation
+          // behavior; a subsequent save still reports its own success/failure.
+        }
+      }
+
+      if (cancelled) return;
+      setItinerary(draft);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

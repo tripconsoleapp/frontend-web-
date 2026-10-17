@@ -13,17 +13,20 @@ import {
   ToggleRow,
 } from "@/components/profile/profile-rows";
 import { MOCK_USER, getInitials } from "@/lib/mock-user";
+import { useAuth } from "@/lib/auth-context";
 
 export function ProfileView() {
   const router = useRouter();
+  const { logout } = useAuth();
   const [twoFactor, setTwoFactor] = useState(true);
   const [push, setPush] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(false);
   const [smsAlerts, setSmsAlerts] = useState(true);
   const [logoutOpen, setLogoutOpen] = useState(false);
 
-  function handleLogout() {
+  async function handleLogout() {
     setLogoutOpen(false);
+    await logout();
     router.push("/login");
   }
 

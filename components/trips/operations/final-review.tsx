@@ -6,20 +6,35 @@ import { motion, useReducedMotion, type Variants } from "motion/react";
 import { ArrowRight, Check } from "lucide-react";
 import { formatCurrency, formatDateRange } from "@/lib/mock-trips";
 import { useTripContext } from "@/lib/use-trip-context";
-import { getItineraryDraft, getServicesDraft, ServicesDraft, ItineraryDraft } from "@/lib/listing-draft";
+import { getBackendTripId, getItineraryDraft, getServicesDraft, saveSubmittedTrip, ServicesDraft, ItineraryDraft } from "@/lib/listing-draft";
 import { computeTripCostBreakdown } from "@/lib/trip-operations";
 import { CreateStepper } from "@/components/trips/create-stepper";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api-client";
+import { submitTrip } from "@/lib/trip-api";
+import { FormError } from "@/components/ui/form-error";
+
+function submitErrorMessage(err: unknown): string {
+  if (!(err instanceof ApiError)) return "Could not reach the server. Please try again.";
+  if (err.status === 403) return "You don't have permission to submit this trip.";
+  if (err.status === 409) return "This trip can no longer be submitted in its current state.";
+  if (err.status === 400) return err.message;
+  return err.message || "Could not submit your trip. Please try again.";
+}
 
 export function FinalReview() {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
   const trip = useTripContext();
+  const { authedFetch } = useAuth();
 
   const [services, setServices] = useState<ServicesDraft | null>(null);
   const [itinerary, setItinerary] = useState<ItineraryDraft | null>(null);
   const [confirmedTerms, setConfirmedTerms] = useState(false);
   const [confirmedAvailability, setConfirmedAvailability] = useState(false);
   const [confirmedPolicy, setConfirmedPolicy] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     setServices(getServicesDraft());
@@ -50,9 +65,33 @@ export function FinalReview() {
     ? { hidden: { opacity: 1, y: 0 }, show: { opacity: 1, y: 0 } }
     : { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 
-  function handleSubmit() {
-    if (!allConfirmed) return;
-    router.push("/trips/create/submitting");
+  async function handleSubmit() {
+    if (!allConfirmed || submitting) return;
+
+    const backendTripId = getBackendTripId();
+    if (!backendTripId) {
+      setSubmitError("This trip isn't saved to the server yet — go back to Trip Basics and try again.");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const backendTrip = await submitTrip(backendTripId, authedFetch);
+      saveSubmittedTrip({
+        id: backendTrip.id,
+        status: backendTrip.status,
+        version: backendTrip.version ?? 0,
+        declarationsConfirmed: backendTrip.declarationsConfirmed ?? true,
+        costSnapshot: backendTrip.costSnapshot ?? null,
+        itinerarySnapshot: backendTrip.itinerarySnapshot ?? null,
+        confirmedAt: new Date().toISOString(),
+      });
+      router.push("/trips/create/submitting");
+    } catch (err) {
+      setSubmitting(false);
+      setSubmitError(submitErrorMessage(err));
+    }
   }
 
   return (
@@ -131,17 +170,25 @@ export function FinalReview() {
         </motion.div>
       </motion.div>
 
-      <div className="fixed inset-x-0 bottom-0 z-10 flex items-center justify-between border-t border-navy/10 bg-white px-10 py-4 lg:left-60">
-        <span className="font-body text-xs text-text-grey">{allConfirmed ? "Ready to submit" : "Confirm all declarations to continue"}</span>
+      <div className="fixed inset-x-0 bottom-0 z-10 flex items-center justify-between gap-4 border-t border-navy/10 bg-white px-10 py-4 lg:left-60">
+        <div className="flex min-w-0 flex-col gap-1">
+          {submitError ? (
+            <FormError message={submitError} />
+          ) : (
+            <span className="font-body text-xs text-text-grey">
+              {submitting ? "Submitting to the server…" : allConfirmed ? "Ready to submit" : "Confirm all declarations to continue"}
+            </span>
+          )}
+        </div>
         <motion.button
           type="button"
-          whileHover={allConfirmed ? { y: -1 } : undefined}
-          whileTap={allConfirmed ? { scale: 0.98 } : undefined}
-          disabled={!allConfirmed}
+          whileHover={allConfirmed && !submitting ? { y: -1 } : undefined}
+          whileTap={allConfirmed && !submitting ? { scale: 0.98 } : undefined}
+          disabled={!allConfirmed || submitting}
           onClick={handleSubmit}
-          className="inline-flex items-center gap-1.5 rounded-full bg-orange px-8 py-4 font-body text-base font-medium text-white transition-colors hover:bg-orange/90 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-orange px-8 py-4 font-body text-base font-medium text-white transition-colors hover:bg-orange/90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Check size={16} /> Submit Trip <ArrowRight size={16} />
+          <Check size={16} /> {submitting ? "Submitting…" : "Submit Trip"} <ArrowRight size={16} />
         </motion.button>
       </div>
     </div>

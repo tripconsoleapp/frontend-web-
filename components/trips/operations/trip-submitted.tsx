@@ -7,7 +7,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Check, ClipboardCheck, Truck, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
 import { useTripContext } from "@/lib/use-trip-context";
-import { TripRecord, getTripRecord } from "@/lib/listing-draft";
+import { SubmittedTripSummary, TripRecord, getSubmittedTrip, getTripRecord } from "@/lib/listing-draft";
 import { currentCostSnapshot } from "@/lib/trip-operations";
 
 const NEXT_STEPS = [
@@ -25,17 +25,30 @@ export function TripSubmitted() {
   const shouldReduce = useReducedMotion();
   const trip = useTripContext();
   const [record, setRecord] = useState<TripRecord | null>(null);
+  const [submittedTrip, setSubmittedTrip] = useState<SubmittedTripSummary | null>(null);
 
   useEffect(() => {
-    const r = getTripRecord();
+    // The backend confirmation (set by final-review.tsx only after a real
+    // PATCH /trips/:id/status success) is the authoritative gate for this
+    // screen — the local TripRecord alone is never enough to show success.
+    const confirmed = getSubmittedTrip();
+    if (!confirmed) {
+      router.replace("/trips/create/review");
+      return;
+    }
+    // Passed as submission-processing.tsx's own call already does — a
+    // no-op here in the normal flow (that call already created/found the
+    // record), kept only so this page never depends on call ordering.
+    const r = getTripRecord(confirmed.id);
     if (r.status !== "submitted") {
       router.replace("/trips/create/review");
       return;
     }
+    setSubmittedTrip(confirmed);
     setRecord(r);
   }, [router]);
 
-  if (!record) {
+  if (!record || !submittedTrip) {
     return <div className="h-64 animate-pulse rounded-2xl bg-navy/[0.04]" />;
   }
 
@@ -65,15 +78,17 @@ export function TripSubmitted() {
           <div>
             <p className="font-body text-sm font-semibold uppercase tracking-wide text-mint">Trip Submitted</p>
             <h1 className="mt-1 font-heading text-2xl font-bold text-white sm:text-3xl">{trip.tripName || "Your trip"} is on its way</h1>
-            <p className="mt-1 max-w-md font-body text-sm text-white/85">Your trip has been successfully submitted for review.</p>
+            <p className="mt-1 max-w-md font-body text-sm text-white/85">
+              The server has confirmed your trip is now under review — it isn&rsquo;t published yet, an admin still needs to verify it.
+            </p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div className="rounded-2xl border border-navy/10 p-5">
-          <p className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">Trip Reference</p>
-          <p className="mt-1 font-heading text-lg font-bold text-navy">{record.reference}</p>
+          <p className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">Trip ID</p>
+          <p className="mt-1 truncate font-heading text-lg font-bold text-navy" title={submittedTrip.id}>{submittedTrip.id}</p>
         </div>
         <div className="rounded-2xl border border-navy/10 p-5">
           <p className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">Total Investment</p>
@@ -105,7 +120,7 @@ export function TripSubmitted() {
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={() => router.push(`/trips/${record.id}/operations`)}
+          onClick={() => router.push(`/trips/${submittedTrip.id}/operations`)}
           className="inline-flex items-center gap-1.5 rounded-full bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90"
         >
           Go to Trip Operations <ArrowRight size={14} />

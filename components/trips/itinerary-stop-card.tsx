@@ -14,6 +14,11 @@ export interface DestinationStop {
   lng: number;
   nights: number;
   overnight: boolean;
+  /** The real backend TripDestination.id once this stop has been persisted
+   *  (Start-from-Scratch trips only — see lib/destination-api.ts). Absent
+   *  for template/pilgrimage/scheduled drafts, which don't persist
+   *  destinations to the backend in this phase. */
+  backendId?: string;
 }
 
 export function StartStopCard({

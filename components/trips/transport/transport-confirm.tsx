@@ -7,6 +7,7 @@ import { Check } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
 import {
   VehicleSelectionItem,
+  getBackendTripId,
   getReviewReturnHref,
   getServicesDraft,
   saveServicesDraft,
@@ -15,12 +16,19 @@ import { totalCapacity, totalPrice } from "@/lib/transport";
 import { useTripContext } from "@/lib/use-trip-context";
 import { TransportContextHeader } from "./transport-context-header";
 import { buttonVariants } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api-client";
+import { replaceVehicleServices } from "@/lib/vehicle-service-api";
+import { FormError } from "@/components/ui/form-error";
 
 export function TransportConfirm({ template }: { template?: string }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
   const { passengerCount, routeLabel, dateRangeLabel } = useTripContext();
+  const { authedFetch } = useAuth();
   const [vehicles, setVehicles] = useState<VehicleSelectionItem[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     setVehicles(getServicesDraft().vehicle.pending);
@@ -33,14 +41,48 @@ export function TransportConfirm({ template }: { template?: string }) {
   const covered = totalCapacity(vehicles);
   const total = totalPrice(vehicles);
 
-  function handleConfirm() {
+  async function handleConfirm() {
+    let confirmedVehicles = vehicles;
+
+    const backendTripId = getBackendTripId();
+    if (backendTripId) {
+      setSubmitting(true);
+      setSyncError(null);
+      const previousVehicles = getServicesDraft().vehicle.vehicles;
+      try {
+        // Replaces whatever transport configuration already exists on the
+        // trip with this one — this is demo/config persistence (see
+        // lib/vehicle-service-api.ts), never a real booking, so a clean
+        // replace-on-reconfirm is safe. One TripService per vehicle; the
+        // backend has no grouping relation between them (documented there).
+        confirmedVehicles = await replaceVehicleServices(
+          backendTripId,
+          previousVehicles,
+          vehicles,
+          authedFetch
+        );
+      } catch (err) {
+        setSubmitting(false);
+        setSyncError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not save this transport selection. Please try again."
+        );
+        // Never mark transport as configured locally when the backend
+        // rejected it — the in-progress selection is left untouched so the
+        // organizer can retry without re-picking vehicles.
+        return;
+      }
+      setSubmitting(false);
+    }
+
     const draft = getServicesDraft();
     saveServicesDraft({
       ...draft,
       vehicle: {
         enabled: true,
-        configured: vehicles.length > 0,
-        vehicles,
+        configured: confirmedVehicles.length > 0,
+        vehicles: confirmedVehicles,
         pending: [],
       },
     });
@@ -115,6 +157,12 @@ export function TransportConfirm({ template }: { template?: string }) {
         </div>
       </motion.div>
 
+      {syncError && (
+        <div className="fixed inset-x-0 bottom-20 z-10 px-10 lg:left-60">
+          <FormError message={syncError} />
+        </div>
+      )}
+
       <div className="fixed inset-x-0 bottom-0 z-10 flex items-center justify-between border-t border-navy/10 bg-white px-10 py-4 lg:left-60">
         <span className="font-body text-sm text-text-grey">
           {vehicles.length} {vehicles.length === 1 ? "vehicle" : "vehicles"} selected
@@ -124,14 +172,14 @@ export function TransportConfirm({ template }: { template?: string }) {
           whileHover={{ y: -1 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleConfirm}
-          disabled={vehicles.length === 0}
+          disabled={vehicles.length === 0 || submitting}
           className={buttonVariants({
             variant: "accent",
             size: "lg",
             className: "disabled:cursor-not-allowed disabled:opacity-40",
           })}
         >
-          Confirm Transport &rarr;
+          {submitting ? "Saving..." : "Confirm Transport →"}
         </motion.button>
       </div>
     </div>

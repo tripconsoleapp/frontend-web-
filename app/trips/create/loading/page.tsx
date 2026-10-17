@@ -9,9 +9,10 @@ export default async function TripSetupLoadingPage({
     participants?: string;
     mode?: string;
     entry?: string;
+    reset?: string;
   }>;
 }) {
-  const { template: templateId, participants, mode, entry } = await searchParams;
+  const { template: templateId, participants, mode, entry, reset } = await searchParams;
   const template = templateId ? getTemplateById(templateId) : undefined;
 
   const nextParams = new URLSearchParams();
@@ -19,6 +20,7 @@ export default async function TripSetupLoadingPage({
   if (participants) nextParams.set("participants", participants);
   if (mode) nextParams.set("mode", mode);
   if (entry) nextParams.set("entry", entry);
+  if (reset) nextParams.set("reset", reset);
   const query = nextParams.toString();
 
   return (

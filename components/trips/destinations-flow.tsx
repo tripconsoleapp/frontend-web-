@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -34,9 +34,20 @@ import {
   getKeralaLocation,
 } from "@/lib/kerala-locations";
 import { PILGRIMAGE_DESTINATIONS } from "@/lib/pilgrimage-destinations";
-import { getReviewReturnHref, saveDestinationsSummary } from "@/lib/listing-draft";
+import { getBackendTripId, getReviewReturnHref, saveDestinationsSummary } from "@/lib/listing-draft";
 import { useTripMode } from "@/lib/use-trip-mode";
 import { resolveTemplateRouteById } from "@/lib/template-route";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api-client";
+import { FormError } from "@/components/ui/form-error";
+import {
+  backendDestinationToStop,
+  createDestination,
+  deleteDestination,
+  listDestinations,
+  reorderDestinations as reorderDestinationsApi,
+  updateDestination,
+} from "@/lib/destination-api";
 
 function MetricValue({ value }: { value: string }) {
   return (
@@ -69,6 +80,16 @@ export function DestinationsFlow({
   const router = useRouter();
   const shouldReduce = useReducedMotion();
   const { mode } = useTripMode();
+  const { authedFetch } = useAuth();
+
+  // Only set for a Start-from-Scratch trip that already has a real backend
+  // Trip (see trip-basics-form.tsx) — null for Template/Pilgrimage/Join
+  // Scheduled Trip drafts, which never persist destinations in this phase
+  // and behave exactly as before every `backendTripId &&` guard below.
+  const [backendTripId, setBackendTripId] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [drawerSubmitting, setDrawerSubmitting] = useState(false);
+  const reorderSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const start = startId ? getKeralaLocation(startId) : undefined;
   const startLocation: KeralaLocation = start ?? {
@@ -90,6 +111,34 @@ export function DestinationsFlow({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [quickAddId, setQuickAddId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Backend is the authoritative source once a trip has been created — on
+  // mount, recover whatever was already persisted (e.g. after a refresh) and
+  // hydrate the visible list from it. No-op for template/pilgrimage/
+  // scheduled drafts (no backendTripId), so this never touches their
+  // in-memory-only behavior.
+  useEffect(() => {
+    const tripId = getBackendTripId();
+    setBackendTripId(tripId);
+    if (!tripId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await listDestinations(tripId, authedFetch);
+        if (!cancelled && rows.length > 0) {
+          setDestinations(rows.map(backendDestinationToStop));
+        }
+      } catch {
+        // A failed background hydration isn't shown as a user-facing error —
+        // the organizer just continues with an empty/local list and any
+        // subsequent add/edit/remove still reports its own success/failure.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const allStops: KeralaLocation[] = useMemo(
     () => [startLocation, ...destinations],
@@ -150,7 +199,33 @@ export function DestinationsFlow({
     setModalOpen(true);
   }
 
-  function handleModalSubmit(stop: DestinationStop) {
+  async function handleModalSubmit(stop: DestinationStop) {
+    if (backendTripId) {
+      setDrawerSubmitting(true);
+      setSyncError(null);
+      try {
+        if (editingId) {
+          const editing = destinations.find((d) => d.id === editingId);
+          if (editing?.backendId) {
+            await updateDestination(backendTripId, editing.backendId, stop, authedFetch);
+          }
+          stop = { ...stop, backendId: editing?.backendId };
+        } else {
+          const created = await createDestination(backendTripId, stop, authedFetch);
+          stop = { ...stop, backendId: created.id };
+        }
+      } catch (err) {
+        setDrawerSubmitting(false);
+        setSyncError(
+          err instanceof ApiError ? err.message : "Could not save this destination. Please try again."
+        );
+        // Leave the drawer open and local state untouched — never apply a
+        // change locally that the backend rejected.
+        return;
+      }
+      setDrawerSubmitting(false);
+    }
+
     setDestinations((current) => {
       if (editingId) {
         return current.map((d) => (d.id === editingId ? stop : d));
@@ -164,7 +239,19 @@ export function DestinationsFlow({
     setSelectedId(stop.id);
   }
 
-  function handleRemove(id: string) {
+  async function handleRemove(id: string) {
+    const stop = destinations.find((d) => d.id === id);
+    if (backendTripId && stop?.backendId) {
+      try {
+        await deleteDestination(backendTripId, stop.backendId, authedFetch);
+      } catch (err) {
+        setSyncError(
+          err instanceof ApiError ? err.message : "Could not remove this destination. Please try again."
+        );
+        return; // never remove locally when the backend didn't confirm it
+      }
+    }
+    setSyncError(null);
     setDestinations((current) => current.filter((d) => d.id !== id));
     setSelectedId((current) => (current === id ? null : current));
   }
@@ -173,26 +260,68 @@ export function DestinationsFlow({
   // state a custom stop would — order of selection is preserved, and a
   // shrine already on the route (added via chip or custom search) can be
   // removed again from either place.
-  function toggleShrine(id: string) {
-    setDestinations((current) => {
-      if (current.some((d) => d.id === id)) {
-        return current.filter((d) => d.id !== id);
+  async function toggleShrine(id: string) {
+    if (destinations.some((d) => d.id === id)) {
+      await handleRemove(id);
+      return;
+    }
+    const shrine = PILGRIMAGE_DESTINATIONS.find((d) => d.id === id);
+    if (!shrine || shrine.id === startLocation.id) return;
+    const stop: DestinationStop = {
+      id: shrine.id,
+      name: shrine.name,
+      district: shrine.district,
+      x: shrine.x,
+      y: shrine.y,
+      lat: shrine.lat,
+      lng: shrine.lng,
+      nights: 1,
+      overnight: true,
+    };
+    if (backendTripId) {
+      try {
+        const created = await createDestination(backendTripId, stop, authedFetch);
+        setSyncError(null);
+        setDestinations((current) => [...current, { ...stop, backendId: created.id }]);
+      } catch (err) {
+        setSyncError(
+          err instanceof ApiError ? err.message : "Could not add this destination. Please try again."
+        );
       }
-      const shrine = PILGRIMAGE_DESTINATIONS.find((d) => d.id === id);
-      if (!shrine || shrine.id === startLocation.id) return current;
-      const stop: DestinationStop = {
-        id: shrine.id,
-        name: shrine.name,
-        district: shrine.district,
-        x: shrine.x,
-        y: shrine.y,
-        lat: shrine.lat,
-        lng: shrine.lng,
-        nights: 1,
-        overnight: true,
-      };
-      return [...current, stop];
-    });
+      return;
+    }
+    setDestinations((current) => [...current, stop]);
+  }
+
+  /** Reordering (drag or the up/down buttons) must stay optimistic — Reorder
+   *  .Group's drag gesture needs local state to move immediately, and
+   *  blocking on the network would break it. The backend sync is debounced
+   *  in the background instead; on failure, the authoritative order is
+   *  re-fetched rather than guessed, so a failed save never leaves the UI
+   *  silently wrong. */
+  function scheduleReorderSync(order: DestinationStop[]) {
+    if (!backendTripId) return;
+    const tripId = backendTripId;
+    if (reorderSyncTimer.current) clearTimeout(reorderSyncTimer.current);
+    reorderSyncTimer.current = setTimeout(async () => {
+      const backendIds = order.map((d) => d.backendId);
+      if (backendIds.some((id) => !id)) return; // an add/remove is still in flight
+      try {
+        await reorderDestinationsApi(tripId, backendIds as string[], authedFetch);
+        setSyncError(null);
+      } catch (err) {
+        setSyncError(
+          err instanceof ApiError ? err.message : "Could not save the new order. Please try again."
+        );
+        try {
+          const rows = await listDestinations(tripId, authedFetch);
+          setDestinations(rows.map(backendDestinationToStop));
+        } catch {
+          // Reconciliation failed too (e.g. offline) — the error banner
+          // above already told the organizer the order didn't save.
+        }
+      }
+    }, 600);
   }
 
   function handleMoveUp(id: string) {
@@ -201,6 +330,7 @@ export function DestinationsFlow({
       if (index <= 0) return current;
       const next = current.slice();
       [next[index - 1], next[index]] = [next[index], next[index - 1]];
+      scheduleReorderSync(next);
       return next;
     });
   }
@@ -211,6 +341,7 @@ export function DestinationsFlow({
       if (index === -1 || index >= current.length - 1) return current;
       const next = current.slice();
       [next[index + 1], next[index]] = [next[index], next[index + 1]];
+      scheduleReorderSync(next);
       return next;
     });
   }
@@ -439,7 +570,10 @@ export function DestinationsFlow({
                   <Reorder.Group
                     axis="y"
                     values={destinations}
-                    onReorder={setDestinations}
+                    onReorder={(next) => {
+                      setDestinations(next);
+                      scheduleReorderSync(next);
+                    }}
                     className="flex flex-col gap-2.5"
                   >
                     <AnimatePresence initial={false}>
@@ -491,21 +625,26 @@ export function DestinationsFlow({
           setQuickAddId(null);
         }}
         onSubmit={handleModalSubmit}
+        submitting={drawerSubmitting}
+        submitError={syncError}
       />
 
-      <div className="-mx-10 mt-3 flex shrink-0 items-center justify-between border-t border-navy/10 bg-white px-10 py-3 shadow-[0_-2px_8px_-4px_rgba(45,62,80,0.1)] xl:-mx-14 xl:px-14">
-        <Link href={backHref} className={buttonVariants({ variant: "outline", size: "md" })}>
-          Back
-        </Link>
-        <motion.button
-          type="button"
-          whileHover={{ y: -1 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleNext}
-          className={buttonVariants({ variant: "accent", size: "md" })}
-        >
-          Next: Services &rarr;
-        </motion.button>
+      <div className="-mx-10 mt-3 flex shrink-0 flex-col gap-2 border-t border-navy/10 bg-white px-10 py-3 shadow-[0_-2px_8px_-4px_rgba(45,62,80,0.1)] xl:-mx-14 xl:px-14">
+        {syncError && !modalOpen && <FormError message={syncError} />}
+        <div className="flex items-center justify-between">
+          <Link href={backHref} className={buttonVariants({ variant: "outline", size: "md" })}>
+            Back
+          </Link>
+          <motion.button
+            type="button"
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleNext}
+            className={buttonVariants({ variant: "accent", size: "md" })}
+          >
+            Next: Services &rarr;
+          </motion.button>
+        </div>
       </div>
     </div>
   );

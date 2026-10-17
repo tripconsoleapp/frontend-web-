@@ -7,16 +7,19 @@ import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion
 import { ArrowRight, Check, Minus, UtensilsCrossed } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
 import { useTripContext } from "@/lib/use-trip-context";
-import { MealInstance, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { MealInstance, getBackendTripId, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
 import { MEAL_LABELS, MEAL_TYPES, computeTripDays, mealCounts, mealKey, reconcileMeals } from "@/lib/meal-plan";
 import { MealContextHeader } from "./meal-context-header";
 import { DayNavigator } from "./day-navigator";
 import { SkipMealDialog } from "./skip-meal-dialog";
+import { useAuth } from "@/lib/auth-context";
+import { mealServicesToInstancePatches, type BackendTripService } from "@/lib/meal-service-api";
 
 export function MealPlanningHub({ template }: { template?: string }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
   const trip = useTripContext();
+  const { authedFetch } = useAuth();
   const templateQuery = template ? `?template=${template}` : "";
   const backHref = `/trips/create/services${templateQuery}`;
 
@@ -26,18 +29,46 @@ export function MealPlanningHub({ template }: { template?: string }) {
 
   useEffect(() => {
     if (!trip.ready) return;
-    const draft = getServicesDraft();
-    const days = computeTripDays(trip.stops);
-    const reconciled = reconcileMeals(draft.restaurant.meals, days, trip.passengerCount);
-    saveServicesDraft({
-      ...draft,
-      restaurant: {
-        ...draft.restaurant,
-        meals: reconciled,
-        configured: reconciled.length > 0 && reconciled.every((m) => m.status === "confirmed" || m.status === "skipped"),
-      },
-    });
-    setMeals(reconciled);
+    let cancelled = false;
+    (async () => {
+      const draft = getServicesDraft();
+      const days = computeTripDays(trip.stops);
+      let reconciled = reconcileMeals(draft.restaurant.meals, days, trip.passengerCount);
+
+      // Backend is authoritative once a real trip exists — recover any
+      // confirmed meals already persisted there (e.g. after a refresh
+      // cleared sessionStorage) and let them override the local copy.
+      const backendTripId = getBackendTripId();
+      if (backendTripId) {
+        try {
+          const backendTrip = await authedFetch<{ services: BackendTripService[] }>(
+            `/trips/${backendTripId}`
+          );
+          const patches = mealServicesToInstancePatches(backendTrip.services ?? []);
+          if (patches.size > 0) {
+            reconciled = reconciled.map((m) => patches.get(`${m.dayIndex}-${m.mealType}`) ?? m);
+          }
+        } catch {
+          // Non-fatal — the organizer just continues with the local/route-
+          // derived list; a subsequent confirm still reports its own
+          // success/failure.
+        }
+      }
+
+      if (cancelled) return;
+      saveServicesDraft({
+        ...draft,
+        restaurant: {
+          ...draft.restaurant,
+          meals: reconciled,
+          configured: reconciled.length > 0 && reconciled.every((m) => m.status === "confirmed" || m.status === "skipped"),
+        },
+      });
+      setMeals(reconciled);
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trip.ready]);
 

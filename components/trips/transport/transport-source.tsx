@@ -6,10 +6,12 @@ import { motion, useReducedMotion, type Variants } from "motion/react";
 import { Check, ShieldCheck, Truck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { buttonVariants } from "@/components/ui/button";
-import { getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
+import { getBackendTripId, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
 import { useTripContext } from "@/lib/use-trip-context";
 import { isKsrtcEligible } from "@/lib/transport-eligibility";
 import { TransportContextHeader } from "./transport-context-header";
+import { useAuth } from "@/lib/auth-context";
+import { vehicleServicesToSelection, type BackendTripService } from "@/lib/vehicle-service-api";
 
 type Source = "private" | "ksrtc";
 
@@ -37,6 +39,7 @@ export function TransportSource({ template }: { template?: string }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
   const { passengerCount, isIndividual, ready } = useTripContext();
+  const { authedFetch } = useAuth();
   const [selected, setSelected] = useState<Source | null>(null);
 
   // KSRTC is only ever offered once the group meets the configured
@@ -57,6 +60,32 @@ export function TransportSource({ template }: { template?: string }) {
         vehicle: { ...draft.vehicle, pending: [] },
       });
     }
+
+    // Backend is authoritative once a real trip exists — recover a
+    // previously confirmed configuration that isn't in local state (e.g.
+    // after a refresh cleared sessionStorage). Never overrides a plan
+    // that's already present locally.
+    const backendTripId = getBackendTripId();
+    if (!backendTripId || draft.vehicle.vehicles.length > 0) return;
+    (async () => {
+      try {
+        const backendTrip = await authedFetch<{ services: BackendTripService[] }>(
+          `/trips/${backendTripId}`
+        );
+        const restored = vehicleServicesToSelection(backendTrip.services ?? []);
+        if (restored.length === 0) return;
+        const latest = getServicesDraft();
+        if (latest.vehicle.vehicles.length > 0) return; // something else set it meanwhile
+        saveServicesDraft({
+          ...latest,
+          vehicle: { ...latest.vehicle, vehicles: restored, configured: true },
+        });
+      } catch {
+        // Non-fatal — the organizer just starts (or continues) with no
+        // restored plan; a fresh confirm still reports its own success/failure.
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // A preference recorded earlier (e.g. the pilgrimage Transport

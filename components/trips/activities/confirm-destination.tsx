@@ -5,17 +5,24 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { Check } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-trips";
-import { DestinationActivityPlan, getServicesDraft } from "@/lib/listing-draft";
+import { DestinationActivityPlan, getBackendTripId, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
 import { destinationTotal } from "@/lib/activity-plan";
 import { formatStayDate } from "@/lib/hotel-stays";
 import { ActivityContextHeader } from "./activity-context-header";
+import { useAuth } from "@/lib/auth-context";
+import { ApiError } from "@/lib/api-client";
+import { replaceActivityService } from "@/lib/activity-service-api";
+import { FormError } from "@/components/ui/form-error";
 
 export function ConfirmDestination({ destinationId, template }: { destinationId: string; template?: string }) {
   const router = useRouter();
   const templateQuery = template ? `?template=${template}` : "";
+  const { authedFetch } = useAuth();
 
   const [dest, setDest] = useState<DestinationActivityPlan | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     const draft = getServicesDraft();
@@ -32,6 +39,53 @@ export function ConfirmDestination({ destinationId, template }: { destinationId:
   }
 
   const total = destinationTotal(dest.activities);
+
+  async function handleConfirm() {
+    if (!dest) return;
+    const confirmedDest: DestinationActivityPlan = { ...dest, status: "has_activities" };
+
+    const backendTripId = getBackendTripId();
+    if (backendTripId) {
+      setSubmitting(true);
+      setSyncError(null);
+      try {
+        // Reconfirming (an edited activity list) never leaves two live
+        // TripService rows for this destination — the prior one (if any)
+        // is only removed once the new one is confirmed created. This is
+        // demo/config persistence (see lib/activity-service-api.ts), never
+        // a real booking.
+        const backendId = await replaceActivityService(backendTripId, dest.backendId, confirmedDest, authedFetch);
+        confirmedDest.backendId = backendId;
+      } catch (err) {
+        setSubmitting(false);
+        setSyncError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not save these activities. Please try again."
+        );
+        // Never mark the destination confirmed locally when the backend
+        // rejected it — the in-progress selection is left untouched so the
+        // organizer can retry without re-picking activities.
+        return;
+      }
+      setSubmitting(false);
+    }
+
+    const draft = getServicesDraft();
+    const nextDestinations = draft.activities.destinations.map((d) =>
+      d.destinationId === destinationId ? confirmedDest : d
+    );
+    saveServicesDraft({
+      ...draft,
+      activities: {
+        ...draft.activities,
+        destinations: nextDestinations,
+        configured: nextDestinations.length > 0 && nextDestinations.every((d) => d.status !== "not_planned"),
+      },
+    });
+    setDest(confirmedDest);
+    setConfirmed(true);
+  }
 
   if (confirmed) {
     return (
@@ -96,18 +150,22 @@ export function ConfirmDestination({ destinationId, template }: { destinationId:
         </div>
       </div>
 
+      {syncError && <FormError message={syncError} />}
+
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => setConfirmed(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90"
+          disabled={submitting}
+          onClick={handleConfirm}
+          className="inline-flex items-center gap-1.5 rounded-full bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors hover:bg-orange/90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Check size={15} /> Confirm
+          <Check size={15} /> {submitting ? "Saving..." : "Confirm"}
         </button>
         <button
           type="button"
+          disabled={submitting}
           onClick={() => router.push(`/trips/create/services/activities/${destinationId}/plan${templateQuery}`)}
-          className="font-body text-sm font-medium text-navy underline underline-offset-2 transition-colors hover:text-orange"
+          className="font-body text-sm font-medium text-navy underline underline-offset-2 transition-colors hover:text-orange disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back and edit
         </button>

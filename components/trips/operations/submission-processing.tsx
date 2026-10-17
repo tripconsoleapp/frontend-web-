@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { Check, FileCheck } from "lucide-react";
-import { getBasicsSummary, getServicesDraft, getTripRecord, saveTripRecord } from "@/lib/listing-draft";
+import { getBasicsSummary, getServicesDraft, getSubmittedTrip, getTripRecord, saveTripRecord } from "@/lib/listing-draft";
 import { computeTripPricing, createCostSnapshot, generateTripReference } from "@/lib/trip-operations";
 
 const STAGE_LABELS = ["Validating trip details", "Locking cost snapshot", "Creating trip submission", "Sending to operations queue"];
@@ -28,21 +28,47 @@ export function SubmissionProcessing() {
     // final saveTripRecord() complete anyway is correct — a submission in
     // progress shouldn't be abandoned just because the tab changed route.
     async function run() {
+      // The real PATCH /trips/:id/status call already happened on Final
+      // Review (see final-review.tsx) — it must succeed before the router
+      // ever pushes here. This screen never calls the backend itself and
+      // never fabricates a success outcome; it only proceeds once a real
+      // backend confirmation is already on record. Reaching this screen
+      // any other way (direct navigation, back button after a failed
+      // submit) sends the organizer back to Review instead of faking it.
+      const confirmed = getSubmittedTrip();
+      if (!confirmed) {
+        router.replace("/trips/create/review");
+        return;
+      }
+
       for (let i = 0; i < STAGE_LABELS.length; i++) {
         setStageIndex(i);
         await new Promise((r) => setTimeout(r, shouldReduce ? 0 : 320));
       }
 
-      // Real state transition: lock version-1 cost snapshot from the
-      // actual service pricing, then persist the trip as submitted and
-      // awaiting verification.
+      // Backend submission is already confirmed above. This is bookkeeping
+      // for the existing local Operations/Payment/Passenger/Verification
+      // mock lifecycle (out of scope here) so those already-working screens
+      // keep functioning — it is no longer what decides success.
+      //
+      // `confirmed.id` (the real backend/demo-backend trip id) is passed as
+      // the preferred id for a brand-new local record only — this is the
+      // first place in the normal flow that ever calls getTripRecord(), so
+      // for a plain Start-from-Scratch trip this seeds the record with the
+      // same id the "Go to Trip Operations" link (trip-submitted.tsx) and
+      // the six secondary pages' URLs already use, instead of an unrelated
+      // random one. Template/pilgrimage/scheduled-join trips never reach
+      // this with a real submitted id in the same way, so they're
+      // unaffected. An existing record (e.g. this trip's own record from an
+      // earlier visit) is always returned as-is — this never reassigns or
+      // overwrites an id already in use.
       const services = getServicesDraft();
       const basics = getBasicsSummary();
       const pricing = computeTripPricing(services, {
         passengerCount: basics?.participantCount ?? 0,
         participantBreakdown: basics?.participantBreakdown ?? [],
       });
-      const trip = getTripRecord();
+      const trip = getTripRecord(confirmed.id);
       const snapshot = createCostSnapshot(pricing, trip.costSnapshots);
       saveTripRecord({
         ...trip,

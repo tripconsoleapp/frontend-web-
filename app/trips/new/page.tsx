@@ -74,7 +74,7 @@ export default function NewTripPage() {
               title="Start from Scratch"
               description="Full control — build your trip from zero and choose your own destinations, dates and services."
               ctaLabel="Start from Scratch"
-              href="/trips/create/loading"
+              href="/trips/create/loading?reset=1"
             />
           </motion.div>
 
