@@ -222,6 +222,13 @@ export function TripBasicsForm({
     tripType === "group" ? initialParticipants || 4 : 4
   );
 
+  // Pilgrimage replaces the Trip Type cards (and their School/College/
+  // Group/Individual sub-fields) with this single headcount — it feeds
+  // the same participantCount the rest of the app already reads, so
+  // nothing downstream (Transport Preference, KSRTC eligibility, Review)
+  // needs its own copy.
+  const [pilgrims, setPilgrims] = useState(initialParticipants || 10);
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [emergencyName, setEmergencyName] = useState("");
@@ -252,7 +259,9 @@ export function TripBasicsForm({
     if (existing.tripType) setTripType(existing.tripType);
     if (existing.startDate) setStartDate(existing.startDate);
     if (existing.endDate) setEndDate(existing.endDate);
-    if (existing.tripType === "school" || existing.tripType === "college") {
+    if (getTripMode().mode === "pilgrimage") {
+      if (existing.participantCount) setPilgrims(existing.participantCount);
+    } else if (existing.tripType === "school" || existing.tripType === "college") {
       const studentsEntry = existing.participantBreakdown?.find((e) => e.label === "Students");
       const staffEntry = existing.participantBreakdown?.find((e) => e.label === "Staff");
       if (studentsEntry) setStudents(studentsEntry.count);
@@ -275,16 +284,18 @@ export function TripBasicsForm({
   );
 
   const travelerCount = useMemo(() => {
+    if (tripMode === "pilgrimage") return pilgrims;
     if (tripType === "school" || tripType === "college") return students + staff;
     if (tripType === "group") return members;
     return 1;
-  }, [tripType, students, staff, members]);
+  }, [tripMode, pilgrims, tripType, students, staff, members]);
 
   // KSRTC eligibility is derived live from the same trip type + traveler
   // count that feeds the summary panel and downstream Services/Transport
   // steps — never a separately tracked number. An individual trip never
-  // qualifies, regardless of count.
-  const isIndividual = tripType === "individual";
+  // qualifies, regardless of count; a pilgrimage trip is always a group,
+  // never individual, regardless of whatever tripType state is left over.
+  const isIndividual = tripMode !== "pilgrimage" && tripType === "individual";
   const ksrtcReason = useMemo(
     () => ksrtcEligibilityReason(travelerCount, isIndividual),
     [travelerCount, isIndividual]
@@ -296,7 +307,7 @@ export function TripBasicsForm({
   useEffect(() => {
     if (!basicsHydrated) return;
     const participantBreakdown =
-      tripType === "school" || tripType === "college"
+      tripMode !== "pilgrimage" && (tripType === "school" || tripType === "college")
         ? [
             { label: "Students", count: students },
             { label: "Staff", count: staff },
@@ -304,13 +315,16 @@ export function TripBasicsForm({
         : undefined;
     saveBasicsSummary({
       tripName: tripName || "Untitled Trip",
-      tripType,
+      // A pilgrimage trip is always a group headcount, never one of the
+      // four selectable types (the cards aren't shown) — save "group" so
+      // every existing BasicsTripType consumer keeps working unchanged.
+      tripType: tripMode === "pilgrimage" ? "group" : tripType,
       participantCount: travelerCount,
       participantBreakdown,
       startDate,
       endDate,
     });
-  }, [basicsHydrated, tripName, tripType, travelerCount, startDate, endDate, students, staff]);
+  }, [basicsHydrated, tripMode, tripName, tripType, travelerCount, startDate, endDate, students, staff]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -376,6 +390,13 @@ export function TripBasicsForm({
     return <div className="h-64" />;
   }
 
+  // Pilgrimage collapses "02 Trip type" + "03 Group details" into one
+  // "02 Number of Pilgrims" section, so every section after it shifts up
+  // by one — same numbering style, just one fewer section to count.
+  const travelDatesSectionNumber = tripMode === "pilgrimage" ? "03" : "04";
+  const emergencySectionNumber = tripMode === "pilgrimage" ? "04" : "05";
+  const budgetSectionNumber = tripMode === "pilgrimage" ? "05" : "06";
+
   return (
     <div className="-mx-10 -my-10 min-h-[calc(100vh-2px)] bg-[#FAF8F4] px-10 py-10 xl:-mx-14 xl:-my-12 xl:px-14 xl:py-12">
       <motion.div variants={container} initial="hidden" animate="show" className="flex flex-col gap-8">
@@ -412,27 +433,37 @@ export function TripBasicsForm({
               />
             </motion.div>
 
-            <motion.div variants={item} className="flex flex-col gap-3 border-t border-navy/10 pt-8">
-              <span className="font-body text-xs font-semibold uppercase tracking-wide text-orange">
-                02 &middot; Trip type
-              </span>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {TRIP_TYPES.map((type) => (
-                  <TripTypeCard
-                    key={type.id}
-                    icon={type.icon}
-                    title={type.title}
-                    description={type.description}
-                    tint={type.tint}
-                    selected={tripType === type.id}
-                    onSelect={() => setTripType(type.id)}
-                  />
-                ))}
-              </div>
-            </motion.div>
+            {tripMode === "pilgrimage" ? (
+              <motion.div variants={item} className="flex flex-col gap-3 border-t border-navy/10 pt-8">
+                <span className="font-body text-xs font-semibold uppercase tracking-wide text-orange">
+                  02 &middot; Number of Pilgrims
+                </span>
+                <CounterInput label="Pilgrims" value={pilgrims} onChange={setPilgrims} min={1} />
+                <p className="font-body text-xs text-text-grey">This helps plan buses and seats later.</p>
+              </motion.div>
+            ) : (
+              <motion.div variants={item} className="flex flex-col gap-3 border-t border-navy/10 pt-8">
+                <span className="font-body text-xs font-semibold uppercase tracking-wide text-orange">
+                  02 &middot; Trip type
+                </span>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {TRIP_TYPES.map((type) => (
+                    <TripTypeCard
+                      key={type.id}
+                      icon={type.icon}
+                      title={type.title}
+                      description={type.description}
+                      tint={type.tint}
+                      selected={tripType === type.id}
+                      onSelect={() => setTripType(type.id)}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             <AnimatePresence mode="wait">
-              {(tripType === "school" || tripType === "college") && (
+              {tripMode !== "pilgrimage" && (tripType === "school" || tripType === "college") && (
                 <motion.div
                   key="school-college"
                   {...fieldMotion}
@@ -471,7 +502,7 @@ export function TripBasicsForm({
                 </motion.div>
               )}
 
-              {tripType === "individual" && (
+              {tripMode !== "pilgrimage" && tripType === "individual" && (
                 <motion.div
                   key="individual"
                   {...fieldMotion}
@@ -484,7 +515,7 @@ export function TripBasicsForm({
                 </motion.div>
               )}
 
-              {tripType === "group" && (
+              {tripMode !== "pilgrimage" && tripType === "group" && (
                 <motion.div
                   key="group"
                   {...fieldMotion}
@@ -518,7 +549,7 @@ export function TripBasicsForm({
 
             <motion.div variants={item} className="flex flex-col gap-3 border-t border-navy/10 pt-8">
               <span className="font-body text-xs font-semibold uppercase tracking-wide text-orange">
-                04 &middot; Travel dates
+                {travelDatesSectionNumber} &middot; Travel dates
               </span>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
@@ -551,7 +582,7 @@ export function TripBasicsForm({
             <motion.div variants={item} className="flex flex-col gap-3 border-t border-navy/10 pt-8">
               <div>
                 <span className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">
-                  05 &middot; Emergency contact
+                  {emergencySectionNumber} &middot; Emergency contact
                 </span>
                 <p className="mt-0.5 font-body text-xs text-text-grey">
                   For use during the journey.
@@ -580,7 +611,7 @@ export function TripBasicsForm({
 
             <motion.div variants={item} className="flex flex-col gap-3 border-t border-navy/10 pt-8">
               <span className="font-body text-xs font-semibold uppercase tracking-wide text-text-grey">
-                06 &middot; Estimated trip budget
+                {budgetSectionNumber} &middot; Estimated trip budget
               </span>
               <Input
                 label="Budget (Optional)"
@@ -619,10 +650,11 @@ export function TripBasicsForm({
           <motion.div variants={item} className="lg:col-span-2">
             <TripSummaryPanel
               tripName={tripName}
-              tripTypeLabel={TRIP_TYPE_LABELS[tripType]}
+              tripTypeLabel={tripMode === "pilgrimage" ? "Pilgrimage" : TRIP_TYPE_LABELS[tripType]}
               travelerCount={travelerCount}
               dateRangeLabel={dateRangeLabel}
               durationLabel={durationLabel}
+              isPilgrimage={tripMode === "pilgrimage"}
             />
           </motion.div>
         </form>

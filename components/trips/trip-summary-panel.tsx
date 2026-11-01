@@ -10,6 +10,10 @@ interface TripSummaryPanelProps {
   travelerCount: number;
   dateRangeLabel: string;
   durationLabel: string;
+  /** When true, the "Type" cell below shows "Pilgrims: <count>" instead —
+   *  Trip Basics never shows the four Trip Type cards for a pilgrimage
+   *  trip, so there's no type label to display here either. */
+  isPilgrimage?: boolean;
 }
 
 function AnimatedText({
@@ -41,6 +45,7 @@ export function TripSummaryPanel({
   travelerCount,
   dateRangeLabel,
   durationLabel,
+  isPilgrimage = false,
 }: TripSummaryPanelProps) {
   return (
     <div className="flex flex-col gap-5 lg:sticky lg:top-8">
@@ -87,9 +92,9 @@ export function TripSummaryPanel({
         </p>
         <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
           <div>
-            <p className="font-body text-xs text-text-grey">Type</p>
+            <p className="font-body text-xs text-text-grey">{isPilgrimage ? "Pilgrims" : "Type"}</p>
             <AnimatedText
-              value={tripTypeLabel}
+              value={isPilgrimage ? `${travelerCount}` : tripTypeLabel}
               className="block font-heading text-base font-semibold text-navy"
             />
           </div>

@@ -3,17 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion, type Variants } from "motion/react";
-import { Check, ShieldCheck, Truck } from "lucide-react";
+import { Check, ShieldCheck, Ticket, Truck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { buttonVariants } from "@/components/ui/button";
 import { getBackendTripId, getServicesDraft, saveServicesDraft } from "@/lib/listing-draft";
 import { useTripContext } from "@/lib/use-trip-context";
 import { isKsrtcEligible } from "@/lib/transport-eligibility";
+import { resolveStationByName } from "@/lib/ksrtc-ticket-api";
 import { TransportContextHeader } from "./transport-context-header";
 import { useAuth } from "@/lib/auth-context";
 import { vehicleServicesToSelection, type BackendTripService } from "@/lib/vehicle-service-api";
 
-type Source = "private" | "ksrtc";
+type Source = "private" | "ksrtc" | "scheduled";
 
 const SOURCES: {
   id: Source;
@@ -33,18 +34,26 @@ const SOURCES: {
     description: "Government-operated transport options.",
     icon: ShieldCheck,
   },
+  {
+    id: "scheduled",
+    title: "Buy seats on a scheduled bus",
+    description: "Book individual KSRTC seats on a regular timetabled service, like a bus ticket.",
+    icon: Ticket,
+  },
 ];
 
 export function TransportSource({ template }: { template?: string }) {
   const router = useRouter();
   const shouldReduce = useReducedMotion();
-  const { passengerCount, isIndividual, ready } = useTripContext();
+  const { passengerCount, isIndividual, ready, startLocationName, stops, startDate } = useTripContext();
   const { authedFetch } = useAuth();
   const [selected, setSelected] = useState<Source | null>(null);
 
-  // KSRTC is only ever offered once the group meets the configured
-  // threshold — the organizer never sees it as a selectable option
-  // otherwise, so there's nothing to discover is unavailable later.
+  // KSRTC charter is only ever offered once the group meets the
+  // configured threshold — the organizer never sees it as a selectable
+  // option otherwise, so there's nothing to discover is unavailable
+  // later. Buying individual scheduled seats has no such threshold, so
+  // it stays available regardless of group size.
   const availableSources = ready && !isKsrtcEligible(passengerCount, isIndividual)
     ? SOURCES.filter((s) => s.id !== "ksrtc")
     : SOURCES;
@@ -113,6 +122,18 @@ export function TransportSource({ template }: { template?: string }) {
 
   function handleContinue() {
     if (!selected) return;
+    if (selected === "scheduled") {
+      const fromStation = resolveStationByName(startLocationName);
+      const toStation = resolveStationByName(stops[stops.length - 1]?.name ?? "");
+      const params = new URLSearchParams();
+      if (fromStation) params.set("from", fromStation.id);
+      if (toStation) params.set("to", toStation.id);
+      if (startDate) params.set("date", startDate);
+      if (passengerCount > 0) params.set("passengers", String(Math.min(6, passengerCount)));
+      const search = params.toString();
+      router.push(`/tickets/search${search ? `?${search}` : ""}`);
+      return;
+    }
     if (selected === "ksrtc") {
       router.push(`/trips/create/services/vehicle/results?source=ksrtc${query}`);
     } else {
@@ -151,7 +172,11 @@ export function TransportSource({ template }: { template?: string }) {
         variants={container}
         initial="hidden"
         animate="show"
-        className={cn("grid grid-cols-1 gap-4", availableSources.length > 1 && "sm:grid-cols-2")}
+        className={cn(
+          "grid grid-cols-1 gap-4",
+          availableSources.length === 2 && "sm:grid-cols-2",
+          availableSources.length >= 3 && "sm:grid-cols-2 lg:grid-cols-3"
+        )}
       >
         {availableSources.map((source) => {
           const Icon = source.icon;

@@ -16,6 +16,11 @@ const STATUS_LABELS: Record<TransactionStatus, string> = {
 };
 
 function getDetailHref(transaction: Transaction) {
+  // Cancelled-KSRTC-ticket refunds are synthesized from lib/ksrtc-ticket-state.ts
+  // with the ticket id in tripId — they link into /tickets, not /trips.
+  if (transaction.id.startsWith("txn-ticket-refund-")) {
+    return `/tickets/${transaction.tripId}`;
+  }
   if (transaction.status === "pending") {
     return `/trips/${transaction.tripId}/pay`;
   }

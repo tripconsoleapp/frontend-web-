@@ -1,40 +1,40 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Landmark } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
-/** A real photographic banner, not a flat tinted card with decorative
- *  circles — the pilgrimage program gets the same visual weight as a
- *  destination, not a footnote. */
+/** A split band, not a photo-with-text-on-top banner — a warm off-white
+ *  panel on the left (clearly distinct from the rest of the white page)
+ *  and the temple photo filling the full height on the right. Only the
+ *  outer corners round; the seam between panel and photo stays sharp. */
 export function PilgrimageBanner() {
   return (
     <Link
       href="/pilgrimage"
-      className="group relative flex min-h-[280px] flex-col justify-end overflow-hidden rounded-3xl sm:min-h-[320px]"
+      className="group flex min-h-[300px] flex-col overflow-hidden sm:flex-row"
     >
-      <Image
-        src="https://images.unsplash.com/photo-1644773182204-f0bf03cae0cb?auto=format&fit=crop&w=1800&q=80"
-        alt=""
-        fill
-        sizes="100vw"
-        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/45 to-navy/10" />
-
-      <div className="relative z-10 flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-10">
-        <div className="max-w-lg">
-          <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-mint/90 px-3 py-1 font-body text-xs font-semibold uppercase tracking-wide text-navy">
-            <Landmark size={12} /> Pilgrimage Program
-          </span>
-          <h2 className="font-heading text-2xl font-bold leading-tight text-white sm:text-3xl">
-            Planning a Sabarimala or Guruvayur trip?
-          </h2>
-          <p className="mt-2 font-body text-base text-white/80">
-            Dedicated pilgrim itineraries, KSRTC coordination, and group management tools.
-          </p>
+      <div className="flex flex-1 flex-col justify-center gap-4 rounded-t-[24px] bg-[#F6F2EB] px-6 py-10 sm:rounded-l-[24px] sm:rounded-tr-none sm:px-10 sm:py-12">
+        <p className="font-body text-xs font-semibold uppercase tracking-wide text-orange">Pilgrimage Program</p>
+        <div>
+          <h2 className="font-serif text-2xl leading-tight text-navy sm:text-3xl">Planning a Sabarimala or Guruvayur trip?</h2>
+          <p className="mt-2 font-body text-sm text-text-grey">ശബരിമല &middot; ഗുരുവായൂർ</p>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-6 py-3 font-body text-sm font-semibold text-navy transition-transform group-hover:scale-105">
-          Explore Programs <ArrowRight size={15} />
+        <p className="max-w-sm font-body text-base text-text-grey">
+          Dedicated pilgrim itineraries, KSRTC coordination, and group management tools.
+        </p>
+        <span className="inline-flex w-fit items-center gap-2 rounded-xl bg-orange px-6 py-3 font-body text-sm font-semibold text-white transition-colors group-hover:bg-orange/90">
+          Explore Programs
+          <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-1" />
         </span>
+      </div>
+
+      <div className="relative h-56 flex-1 overflow-hidden rounded-b-[24px] sm:h-auto sm:rounded-b-none sm:rounded-r-[24px]">
+        <Image
+          src="https://images.unsplash.com/photo-1644773182204-f0bf03cae0cb?auto=format&fit=crop&w=1400&q=80"
+          alt=""
+          fill
+          sizes="(min-width: 640px) 50vw, 100vw"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+        />
       </div>
     </Link>
   );

@@ -69,11 +69,23 @@ function MetricValue({ value }: { value: string }) {
 export function DestinationsFlow({
   startId,
   startLabel,
+  startDistrict,
+  startLat,
+  startLng,
   templateId,
   templateName,
 }: {
+  /** Legacy path: a KERALA_LOCATIONS id, still sent by Template Review's
+   *  "Edit Route" link (lib/template-route.ts resolves templates against
+   *  that fixed list). Takes priority when present. */
   startId?: string;
+  /** Real path: a freely geocoded place from the shared location picker
+   *  (components/trips/location-picker.tsx) — used whenever `startId`
+   *  isn't, i.e. every fresh "Start from Scratch" visit. */
   startLabel?: string;
+  startDistrict?: string;
+  startLat?: number;
+  startLng?: number;
   templateId?: string;
   templateName?: string;
 }) {
@@ -91,15 +103,15 @@ export function DestinationsFlow({
   const [drawerSubmitting, setDrawerSubmitting] = useState(false);
   const reorderSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const start = startId ? getKeralaLocation(startId) : undefined;
-  const startLocation: KeralaLocation = start ?? {
+  const legacyStart = startId ? getKeralaLocation(startId) : undefined;
+  const startLocation: KeralaLocation = legacyStart ?? {
     id: "start",
     name: startLabel || "Kochi",
-    district: "Kerala",
-    x: 150,
-    y: 220,
-    lat: 9.9312,
-    lng: 76.2673,
+    district: startDistrict || "Kerala",
+    x: 0,
+    y: 0,
+    lat: startLat ?? 9.9312,
+    lng: startLng ?? 76.2673,
   };
 
   const fromTemplate = Boolean(templateId);
@@ -109,7 +121,6 @@ export function DestinationsFlow({
   const [bannerVisible, setBannerVisible] = useState(fromTemplate);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [quickAddId, setQuickAddId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Backend is the authoritative source once a trip has been created — on
@@ -183,19 +194,11 @@ export function DestinationsFlow({
 
   function openAddModal() {
     setEditingId(null);
-    setQuickAddId(null);
     setModalOpen(true);
   }
 
   function openEditModal(id: string) {
     setEditingId(id);
-    setQuickAddId(null);
-    setModalOpen(true);
-  }
-
-  function handleQuickAdd(location: KeralaLocation) {
-    setEditingId(null);
-    setQuickAddId(location.id);
     setModalOpen(true);
   }
 
@@ -235,7 +238,6 @@ export function DestinationsFlow({
     });
     setModalOpen(false);
     setEditingId(null);
-    setQuickAddId(null);
     setSelectedId(stop.id);
   }
 
@@ -440,8 +442,6 @@ export function DestinationsFlow({
           <div className="relative aspect-[2/3] w-full min-h-0 overflow-hidden rounded-3xl lg:aspect-auto lg:h-full">
             <RouteMap
               stops={allStops}
-              onQuickAdd={handleQuickAdd}
-              excludeIds={[startLocation.id, ...destinations.map((d) => d.id)]}
               selectedId={selectedId}
               onSelectStop={toggleSelect}
               showFitControl={destinations.length > 0}
@@ -616,13 +616,11 @@ export function DestinationsFlow({
       <AddDestinationDrawer
         open={modalOpen}
         previousStop={modalPreviousStop}
-        excludeIds={[startLocation.id, ...destinations.map((d) => d.id)]}
+        contextStops={allStops}
         editingStop={editingStop}
-        initialLocationId={quickAddId}
         onClose={() => {
           setModalOpen(false);
           setEditingId(null);
-          setQuickAddId(null);
         }}
         onSubmit={handleModalSubmit}
         submitting={drawerSubmitting}

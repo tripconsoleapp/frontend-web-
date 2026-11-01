@@ -15,18 +15,18 @@ export function RecommendationRail({ templates }: { templates: Template[] }) {
       <p className="mt-1 font-body text-base text-text-grey">
         Ready-made itineraries worth a look.
       </p>
-      <div className="mt-5 flex snap-x gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map((template) => (
           <Link
             key={template.id}
             href={`/templates/${template.id}`}
-            className="group relative flex h-64 w-[260px] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl sm:w-[300px]"
+            className="group relative flex h-64 w-full flex-col justify-end overflow-hidden rounded-2xl"
           >
             <Image
               src={template.imageUrl}
               alt={template.name}
               fill
-              sizes="300px"
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-navy/85 via-navy/25 to-transparent" />

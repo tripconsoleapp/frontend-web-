@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Ticket } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { buttonVariants } from "@/components/ui/button";
 import { Trip, TripStatus } from "@/lib/mock-trips";
@@ -70,6 +71,12 @@ export function TripsView({ trips }: { trips: Trip[] }) {
             {t.label}
           </button>
         ))}
+        <Link
+          href="/tickets"
+          className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-navy/5 px-4 py-2 font-body text-sm font-medium text-navy transition-colors hover:bg-navy/10"
+        >
+          <Ticket size={14} /> Tickets
+        </Link>
       </div>
 
       <p className="font-body text-sm text-text-grey">

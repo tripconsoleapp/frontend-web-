@@ -2,18 +2,12 @@
 
 import "leaflet/dist/leaflet.css";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import L from "leaflet";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
-import { animate } from "motion";
-import { AnimatePresence, motion } from "motion/react";
-import { Locate, Minus, Plus, Search, X } from "lucide-react";
+import { Locate, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
-import {
-  KERALA_LOCATIONS,
-  KeralaLocation,
-  buildCurvedRoutePath,
-} from "@/lib/kerala-locations";
+import { KeralaLocation } from "@/lib/kerala-locations";
 
 const KOCHI_FALLBACK: [number, number] = [9.9312, 76.2673];
 
@@ -42,46 +36,10 @@ function createPinIcon(
   });
 }
 
-function RouteLine({ stops }: { stops: KeralaLocation[] }) {
-  const map = useMap();
-  const lineRef = useRef<L.Polyline | null>(null);
-
-  useEffect(() => {
-    lineRef.current?.remove();
-    lineRef.current = null;
-
-    if (stops.length < 2) return;
-
-    const path = buildCurvedRoutePath(stops);
-    const line = L.polyline(path, {
-      color: "#FF6B35",
-      weight: 3.5,
-      opacity: 0.9,
-      lineJoin: "round",
-      lineCap: "round",
-    }).addTo(map);
-    lineRef.current = line;
-
-    const pathEl = (line as unknown as { _path?: SVGPathElement })._path;
-    if (pathEl) {
-      const length = pathEl.getTotalLength();
-      pathEl.style.strokeDasharray = `${length}`;
-      pathEl.style.strokeDashoffset = `${length}`;
-      animate(
-        pathEl,
-        { strokeDashoffset: [length, 0] },
-        { duration: 0.9, ease: [0.22, 1, 0.36, 1] }
-      );
-    }
-
-    return () => {
-      line.remove();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, stops.map((s) => s.id).join("-")]);
-
-  return null;
-}
+// No routing service is configured in this project (see
+// shared-location-picker.tsx's header comment) — stops are shown only as
+// numbered pins. A straight or curved line between them would imply a
+// real route that was never calculated, so none is drawn.
 
 function fitStopsView(map: L.Map, stops: KeralaLocation[]) {
   if (stops.length === 0) return;
@@ -146,7 +104,7 @@ function ZoomControls({
 }) {
   const map = useMap();
   return (
-    <div className="absolute bottom-6 right-6 z-[800] flex flex-col overflow-hidden rounded-xl bg-white shadow-md">
+    <div className="absolute right-6 top-6 z-[800] flex flex-col overflow-hidden rounded-xl bg-white shadow-md">
       <button
         type="button"
         onClick={() => map.zoomIn()}
@@ -218,97 +176,9 @@ function MapResizeHandler() {
   return null;
 }
 
-function MapSearchOverlay({
-  excludeIds,
-  onSelect,
-}: {
-  excludeIds: string[];
-  onSelect: (location: KeralaLocation) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const [focused, setFocused] = useState(false);
-
-  const results = KERALA_LOCATIONS.filter(
-    (loc) =>
-      !excludeIds.includes(loc.id) &&
-      loc.name.toLowerCase().includes(query.toLowerCase())
-  );
-
-  return (
-    <div className="absolute left-6 top-6 z-[800] w-[320px]">
-      <div
-        className={cn(
-          "flex items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-md ring-1 ring-transparent transition-shadow",
-          focused && "ring-orange/40 shadow-lg"
-        )}
-      >
-        <Search size={15} className="shrink-0 text-text-grey" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setTimeout(() => setFocused(false), 120)}
-          placeholder="Search a destination..."
-          className="w-full bg-transparent font-body text-sm text-navy placeholder:text-text-grey/60 focus:outline-none"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label="Clear search"
-            className="shrink-0 text-text-grey hover:text-navy"
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
-
-      <AnimatePresence>
-        {focused && query && (
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15 }}
-            className="mt-2 overflow-hidden rounded-xl bg-white shadow-lg"
-          >
-            {results.length === 0 ? (
-              <p className="px-4 py-3 font-body text-sm text-text-grey">
-                No matches for &ldquo;{query}&rdquo;.
-              </p>
-            ) : (
-              results.map((loc) => (
-                <button
-                  key={loc.id}
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    onSelect(loc);
-                    setQuery("");
-                  }}
-                  className="flex w-full flex-col items-start px-4 py-2.5 text-left transition-colors hover:bg-orange/5"
-                >
-                  <span className="font-body text-sm font-medium text-navy">
-                    {loc.name}
-                  </span>
-                  <span className="font-body text-xs text-text-grey">
-                    {loc.district}
-                  </span>
-                </button>
-              ))
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 interface LeafletRouteMapProps {
   stops: KeralaLocation[];
   compact?: boolean;
-  onQuickAdd?: (location: KeralaLocation) => void;
-  excludeIds?: string[];
   selectedId?: string | null;
   onSelectStop?: (id: string) => void;
   showFitControl?: boolean;
@@ -317,8 +187,6 @@ interface LeafletRouteMapProps {
 export default function LeafletRouteMap({
   stops,
   compact = false,
-  onQuickAdd,
-  excludeIds = [],
   selectedId = null,
   onSelectStop,
   showFitControl = true,
@@ -331,7 +199,7 @@ export default function LeafletRouteMap({
   return (
     <div
       className={cn(
-        "relative h-full w-full overflow-hidden rounded-3xl shadow-lg shadow-navy/10",
+        "relative h-full w-full overflow-hidden rounded-[20px] border border-navy/10 shadow-lg shadow-navy/10",
         compact && "shadow-none"
       )}
     >
@@ -344,11 +212,14 @@ export default function LeafletRouteMap({
         dragging={!compact}
         doubleClickZoom={!compact}
         touchZoom={!compact}
-        className="h-full w-full bg-mint/10"
+        className="h-full w-full bg-[#e8e6df]"
       >
+        {/* See location-map-inner.tsx: CARTO's anonymous tiles now
+           require an API key, so this falls back to standard OSM tiles. */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
         />
         <AttributionPosition />
         <MapResizeHandler />
@@ -368,16 +239,11 @@ export default function LeafletRouteMap({
           />
         ))}
 
-        {!compact && <RouteLine stops={stops} />}
         {!compact && <FitToStops stops={stops} />}
         {!compact && <FocusStop stop={focusedStop} />}
         {!compact && <ZoomControls stops={stops} showFit={showFitControl} />}
         {compact && stops[0] && <CompactView stop={stops[0]} />}
       </MapContainer>
-
-      {!compact && onQuickAdd && (
-        <MapSearchOverlay excludeIds={excludeIds} onSelect={onQuickAdd} />
-      )}
     </div>
   );
 }

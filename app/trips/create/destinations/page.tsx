@@ -5,9 +5,16 @@ import { getTemplateById } from "@/lib/mock-templates";
 export default async function DestinationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ template?: string; start?: string; startLabel?: string }>;
+  searchParams: Promise<{
+    template?: string;
+    start?: string;
+    startLabel?: string;
+    startDistrict?: string;
+    startLat?: string;
+    startLng?: string;
+  }>;
 }) {
-  const { template: templateId, start, startLabel } = await searchParams;
+  const { template: templateId, start, startLabel, startDistrict, startLat, startLng } = await searchParams;
   const template = templateId ? getTemplateById(templateId) : undefined;
 
   return (
@@ -15,6 +22,9 @@ export default async function DestinationsPage({
       <DestinationsFlow
         startId={start}
         startLabel={startLabel}
+        startDistrict={startDistrict}
+        startLat={startLat ? Number(startLat) : undefined}
+        startLng={startLng ? Number(startLng) : undefined}
         templateId={templateId}
         templateName={template?.name}
       />

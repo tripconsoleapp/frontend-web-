@@ -242,6 +242,42 @@ h6 {
   border: none;
 }
 
+/* ============================================================
+   SHARED LOCATION PICKER — the draggable "drop a pin" marker used
+   by components/trips/location/shared-location-picker.tsx. Same
+   transparent-divIcon treatment as .route-pin-icon above.
+   ============================================================ */
+.location-pin-icon {
+  background: transparent;
+  border: none;
+}
+
+.location-pin-drop {
+  animation: location-pin-drop-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  cursor: grab;
+}
+
+.location-pin-drop:active {
+  cursor: grabbing;
+}
+
+@keyframes location-pin-drop-in {
+  from {
+    transform: translateY(-14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .location-pin-drop {
+    animation: none;
+  }
+}
+
 .route-pin-wrap {
   display: flex;
   flex-direction: column;
